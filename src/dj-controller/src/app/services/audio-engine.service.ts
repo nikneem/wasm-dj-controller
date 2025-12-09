@@ -19,6 +19,14 @@ export class AudioEngineService {
     private scriptProcessor: ScriptProcessorNode | null = null;
     private gainNode: GainNode | null = null;
 
+    // EQ Filters
+    private lowFilter: BiquadFilterNode | null = null;
+    private midFilter: BiquadFilterNode | null = null;
+    private highFilter: BiquadFilterNode | null = null;
+    private lowGainNode: GainNode | null = null;
+    private midGainNode: GainNode | null = null;
+    private highGainNode: GainNode | null = null;
+
     // WASM Audio Processor (will be loaded dynamically)
     private wasmProcessor: any = null;
     private wasmLoaded: boolean = false;
@@ -67,6 +75,40 @@ export class AudioEngineService {
     }
 
     /**
+     * Initialize 3-band EQ filter chain
+     */
+    private initializeEQ(): void {
+        if (!this.audioContext) return;
+
+        // Low band: Low-shelf filter at 250Hz
+        this.lowFilter = this.audioContext.createBiquadFilter();
+        this.lowFilter.type = 'lowshelf';
+        this.lowFilter.frequency.value = 250;
+        this.lowFilter.gain.value = 0; // Will be controlled by lowEqGain
+
+        // Mid band: Peaking filter at 1000Hz
+        this.midFilter = this.audioContext.createBiquadFilter();
+        this.midFilter.type = 'peaking';
+        this.midFilter.frequency.value = 1000;
+        this.midFilter.Q.value = 1.0;
+        this.midFilter.gain.value = 0;
+
+        // High band: High-shelf filter at 4000Hz
+        this.highFilter = this.audioContext.createBiquadFilter();
+        this.highFilter.type = 'highshelf';
+        this.highFilter.frequency.value = 4000;
+        this.highFilter.gain.value = 0;
+
+        // Connect EQ chain: low -> mid -> high -> gain -> destination
+        this.lowFilter.connect(this.midFilter);
+        this.midFilter.connect(this.highFilter);
+        this.highFilter.connect(this.gainNode!);
+        this.gainNode!.connect(this.audioContext.destination);
+
+        console.log('[AudioEngine] 3-band EQ initialized');
+    }
+
+    /**
      * Load the WASM audio processing module
      */
     private async loadWasmModule(): Promise<void> {
@@ -108,8 +150,12 @@ export class AudioEngineService {
             // Initialize gain node if needed
             if (!this.gainNode) {
                 this.gainNode = this.audioContext.createGain();
-                this.gainNode.connect(this.audioContext.destination);
                 this.gainNode.gain.value = 0.8;
+            }
+
+            // Initialize EQ filters if needed
+            if (!this.lowFilter) {
+                this.initializeEQ();
             }
 
             // Initialize WASM processor if loaded
@@ -145,7 +191,8 @@ export class AudioEngineService {
             const bufferSize = 4096; // Must be power of 2
             this.scriptProcessor = this.audioContext.createScriptProcessor(bufferSize, 2, 2);
             this.scriptProcessor.onaudioprocess = (e) => this.processAudio(e);
-            this.scriptProcessor.connect(this.gainNode);
+            // Connect through EQ chain
+            this.scriptProcessor.connect(this.lowFilter!);
         }
 
         this.playbackStartTime = this.audioContext.currentTime - startPosition;
@@ -366,10 +413,13 @@ export class AudioEngineService {
      * @param value EQ value from -255 to +255 (0 = flat)
      */
     setHighEq(value: number): void {
-        // Convert knob value to gain multiplier (0.0 to 2.0)
-        const normalized = value / 255;
-        this.highEqGain = 1.0 + normalized;
-        this.highEqGain = Math.max(0.0, Math.min(2.0, this.highEqGain));
+        // Convert knob value to dB gain (-12dB to +12dB)
+        const gainDb = (value / 255) * 12;
+        this.highEqGain = gainDb;
+
+        if (this.highFilter) {
+            this.highFilter.gain.value = gainDb;
+        }
     }
 
     /**
@@ -377,9 +427,13 @@ export class AudioEngineService {
      * @param value EQ value from -255 to +255 (0 = flat)
      */
     setMidEq(value: number): void {
-        const normalized = value / 255;
-        this.midEqGain = 1.0 + normalized;
-        this.midEqGain = Math.max(0.0, Math.min(2.0, this.midEqGain));
+        // Convert knob value to dB gain (-12dB to +12dB)
+        const gainDb = (value / 255) * 12;
+        this.midEqGain = gainDb;
+
+        if (this.midFilter) {
+            this.midFilter.gain.value = gainDb;
+        }
     }
 
     /**
@@ -387,9 +441,13 @@ export class AudioEngineService {
      * @param value EQ value from -255 to +255 (0 = flat)
      */
     setLowEq(value: number): void {
-        const normalized = value / 255;
-        this.lowEqGain = 1.0 + normalized;
-        this.lowEqGain = Math.max(0.0, Math.min(2.0, this.lowEqGain));
+        // Convert knob value to dB gain (-12dB to +12dB)
+        const gainDb = (value / 255) * 12;
+        this.lowEqGain = gainDb;
+
+        if (this.lowFilter) {
+            this.lowFilter.gain.value = gainDb;
+        }
     }
 
     /**

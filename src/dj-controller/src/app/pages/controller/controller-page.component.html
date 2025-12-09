@@ -9,9 +9,8 @@
         <!-- Center Mixer Panel (30%) -->
         <div class="panel panel-center">
             <app-mixer [leftDeckSettings]="leftChannelSettings" [rightDeckSettings]="rightChannelSettings"
-                [masterVolume]="masterVolume" [crossFader]="crossFader" (leftDeckChange)="onLeftChannelChange($event)"
-                (rightDeckChange)="onRightChannelChange($event)" (masterVolumeChange)="onMasterVolumeChange($event)"
-                (crossFaderChange)="onCrossFaderChange($event)">
+                [crossFader]="crossFader" (leftDeckChange)="onLeftChannelChange($event)"
+                (rightDeckChange)="onRightChannelChange($event)" (crossFaderChange)="onCrossFaderChange($event)">
             </app-mixer>
         </div>
 

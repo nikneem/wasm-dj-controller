@@ -46,7 +46,6 @@ export class ControllerPageComponent {
         volume: 80
     };
 
-    masterVolume = 80;
     crossFader = 0;
 
     onLeftChannelChange(settings: ChannelSettings): void {
@@ -74,17 +73,6 @@ export class ControllerPageComponent {
             service.setPan(settings.fader);
             service.setChannelVolume(settings.volume);
             service.setCrossFader(this.crossFader, false); // false = right deck
-        }
-    }
-
-    onMasterVolumeChange(volume: number): void {
-        console.log('[Controller] Master volume:', volume);
-        // Apply master volume to both decks
-        if (this.leftDeckComponent?.audioEngineService) {
-            this.leftDeckComponent.audioEngineService.setMasterVolume(volume);
-        }
-        if (this.rightDeckComponent?.audioEngineService) {
-            this.rightDeckComponent.audioEngineService.setMasterVolume(volume);
         }
     }
 

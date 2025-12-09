@@ -39,12 +39,10 @@ export class MixerComponent {
         volume: 80
     };
 
-    @Input() masterVolume: number = 80;
     @Input() crossFader: number = 0; // -100 (left) to +100 (right)
 
     @Output() leftDeckChange = new EventEmitter<ChannelSettings>();
     @Output() rightDeckChange = new EventEmitter<ChannelSettings>();
-    @Output() masterVolumeChange = new EventEmitter<number>();
     @Output() crossFaderChange = new EventEmitter<number>();
 
     onLeftGainChange(value: number): void {
@@ -105,11 +103,6 @@ export class MixerComponent {
     onRightVolumeChange(value: number): void {
         this.rightDeckSettings.volume = value;
         this.rightDeckChange.emit(this.rightDeckSettings);
-    }
-
-    onMasterVolumeChange(value: number): void {
-        this.masterVolume = value;
-        this.masterVolumeChange.emit(this.masterVolume);
     }
 
     onCrossFaderChange(value: number): void {
