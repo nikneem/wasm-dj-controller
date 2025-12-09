@@ -45,6 +45,11 @@ export class DeckComponent implements OnInit, OnDestroy {
     // Jog wheel
     jogRotation: number = 0;
     isJogTouched: boolean = false;
+    private lastJogY: number = 0;
+    private jogVelocity: number = 0;
+    private pitchBendTimeout: number | null = null;
+    private readonly JOG_SENSITIVITY = 0.5; // Pixels to degrees ratio
+    private readonly PITCH_BEND_STRENGTH = 30; // Max pitch bend percentage
 
     // Beat grid data
     beatGrid: number[] = [];
@@ -175,21 +180,85 @@ export class DeckComponent implements OnInit, OnDestroy {
         console.log('[Deck] Tempo changed to:', value, '% - BPM now:', this.bpm);
     }
 
-    onJogMouseDown(): void {
+    onJogMouseDown(event: MouseEvent): void {
         this.isJogTouched = true;
-        if (this.isPlaying) {
-            // Scratch mode
-        }
+        this.lastJogY = event.clientY;
+        this.jogVelocity = 0;
     }
 
     onJogMouseUp(): void {
         this.isJogTouched = false;
+
+        // If playing, reset pitch bend after jog is released
+        if (this.isPlaying && this.pitchBendTimeout) {
+            clearTimeout(this.pitchBendTimeout);
+        }
+
+        // Return to normal tempo when jog is released while playing
+        if (this.isPlaying) {
+            this.pitchBendTimeout = window.setTimeout(() => {
+                this.onTempoChange(this.tempoValue);
+            }, 200);
+        }
     }
 
     onJogRotate(event: MouseEvent): void {
-        if (this.isJogTouched) {
-            // Handle jog rotation
-            this.jogRotation += 5; // Mock rotation
+        if (!this.isJogTouched || !this.loadedFileName) {
+            return;
+        }
+
+        // Calculate rotation based on cumulative vertical mouse movement
+        // Upward movement = positive rotation (clockwise)
+        // Downward movement = negative rotation (counter-clockwise)
+        const deltaY = event.clientY - this.lastJogY;
+        const rotationDelta = -deltaY * this.JOG_SENSITIVITY; // Negative because Y increases downward
+
+        this.jogRotation += rotationDelta;
+
+        // Normalize rotation to 0-360 range for visual feedback
+        this.jogRotation = ((this.jogRotation % 360) + 360) % 360;
+
+        // Update last position for next iteration
+        this.lastJogY = event.clientY;
+
+        if (this.isPlaying) {
+            // Pitch bend mode: brief tempo change based on rotation delta
+            this.handlePitchBend(rotationDelta);
+        } else if (this.isPaused || !this.isPlaying) {
+            // Seek mode: move through track based on rotation delta
+            this.handleSeek(rotationDelta);
+        }
+    }
+
+    private handleSeek(rotationDelta: number): void {
+        // Convert rotation delta to seek amount in seconds
+        // Full rotation (360°) = 5 seconds
+        const seekAmount = (rotationDelta / 360) * 5;
+        const currentTime = this.audioPlaybackService.getCurrentTime();
+        const newTime = Math.max(0, Math.min(this.trackDuration, currentTime + seekAmount));
+
+        this.audioPlaybackService.seek(newTime);
+
+        // Update playback position for beat grid sync
+        this.currentPlaybackPosition = newTime;
+    }
+
+    private handlePitchBend(rotation: number): void {
+        // Rotation converts to temporary pitch bend
+        // Full rotation (360°) = ±30% pitch change
+        const pitchBend = (rotation / 360) * this.PITCH_BEND_STRENGTH;
+        const totalTempo = this.tempoValue + pitchBend;
+
+        // Clamp tempo to reasonable range
+        const clampedTempo = Math.max(-50, Math.min(50, totalTempo));
+
+        // Apply pitch bend without saving to tempoValue
+        this.audioPlaybackService.setTempoPercent(clampedTempo);
+
+        // Update BPM display to show bent tempo
+        if (this.originalBPM > 0) {
+            const tempoMultiplier = 1.0 + (clampedTempo / 100);
+            this.bpm = this.originalBPM * tempoMultiplier;
         }
     }
 
