@@ -87,6 +87,46 @@ export class AudioAnalysisService {
         }
     }
 
+    /**
+     * Extract waveform data from an audio file
+     * @param file - The audio file to analyze
+     * @returns Promise resolving to array of amplitude values (0-1)
+     */
+    async extractWaveform(file: File): Promise<number[]> {
+        try {
+            const arrayBuffer = await this.readFileAsArrayBuffer(file);
+            const audioBuffer = await this.decodeAudioFile(arrayBuffer);
+
+            if (!audioBuffer) {
+                return [];
+            }
+
+            const samples = this.getMonoSamples(audioBuffer);
+
+            // Downsample to ~1000 points for visualization
+            const targetLength = 1000;
+            const blockSize = Math.ceil(samples.length / targetLength);
+            const waveform: number[] = [];
+
+            for (let i = 0; i < samples.length; i += blockSize) {
+                const blockEnd = Math.min(i + blockSize, samples.length);
+                let max = 0;
+
+                // Get max amplitude in this block
+                for (let j = i; j < blockEnd; j++) {
+                    max = Math.max(max, Math.abs(samples[j]));
+                }
+
+                waveform.push(max);
+            }
+
+            return waveform;
+        } catch (error) {
+            console.error('Waveform extraction error:', error);
+            return [];
+        }
+    }
+
     private readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();

@@ -14,6 +14,7 @@ export class BeatGridComponent implements AfterViewInit, OnChanges {
     @Input() beatGrid: number[] = []; // Beat positions in seconds
     @Input() duration: number = 0; // Track duration in seconds
     @Input() playbackPosition: number = 0; // Current playback position in seconds
+    @Input() waveformData: number[] = []; // Waveform amplitude data
 
     private canvas!: HTMLCanvasElement;
     private ctx!: CanvasRenderingContext2D;
@@ -76,6 +77,11 @@ export class BeatGridComponent implements AfterViewInit, OnChanges {
         const endTime = this.playbackPosition + (this.zoomLevel / 2);
         const pixelsPerSecond = width / this.zoomLevel;
 
+        // Draw waveform if available
+        if (this.waveformData && this.waveformData.length > 0) {
+            this.drawWaveform(startTime, endTime, pixelsPerSecond, centerX, width, height);
+        }
+
         // Draw beat lines within visible window
         this.beatGrid.forEach((beatTime, index) => {
             // Only draw beats within visible time window
@@ -86,6 +92,7 @@ export class BeatGridComponent implements AfterViewInit, OnChanges {
             // Calculate position relative to playback position (center)
             const timeOffset = beatTime - this.playbackPosition;
             const x = centerX + (timeOffset * pixelsPerSecond);
+
 
             // Every 4th beat is a downbeat (stronger emphasis)
             const isDownbeat = index % 4 === 0;
@@ -123,6 +130,51 @@ export class BeatGridComponent implements AfterViewInit, OnChanges {
 
         // Draw time scale at bottom
         this.drawTimeScale(startTime, endTime, pixelsPerSecond);
+    }
+
+    private drawWaveform(startTime: number, endTime: number, pixelsPerSecond: number, centerX: number, width: number, height: number): void {
+        if (!this.waveformData || this.waveformData.length === 0) return;
+
+        const centerY = height / 2;
+        const waveformHeight = height * 0.4; // Use 40% of canvas height
+
+        // Map time range to waveform data indices
+        const startIdx = Math.max(0, Math.floor((startTime / this.duration) * this.waveformData.length));
+        const endIdx = Math.min(this.waveformData.length, Math.ceil((endTime / this.duration) * this.waveformData.length));
+
+        this.ctx.fillStyle = 'rgba(0, 200, 100, 0.2)';
+        this.ctx.strokeStyle = 'rgba(0, 200, 100, 0.5)';
+        this.ctx.lineWidth = 1;
+
+        // Draw waveform as filled area
+        this.ctx.beginPath();
+
+        // Draw top half of waveform
+        for (let i = startIdx; i < endIdx; i++) {
+            const timeAtIndex = (i / this.waveformData.length) * this.duration;
+            const x = centerX + (timeAtIndex - this.playbackPosition) * pixelsPerSecond;
+            const amplitude = this.waveformData[i];
+            const y = centerY - (amplitude * waveformHeight);
+
+            if (i === startIdx) {
+                this.ctx.moveTo(x, y);
+            } else {
+                this.ctx.lineTo(x, y);
+            }
+        }
+
+        // Draw bottom half of waveform (mirror)
+        for (let i = endIdx - 1; i >= startIdx; i--) {
+            const timeAtIndex = (i / this.waveformData.length) * this.duration;
+            const x = centerX + (timeAtIndex - this.playbackPosition) * pixelsPerSecond;
+            const amplitude = this.waveformData[i];
+            const y = centerY + (amplitude * waveformHeight);
+            this.ctx.lineTo(x, y);
+        }
+
+        this.ctx.closePath();
+        this.ctx.fill();
+        this.ctx.stroke();
     }
 
     private updatePlayhead(): void {

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { SliderModule } from 'primeng/slider';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { AudioAnalysisService } from '../../services/audio-analysis.service';
 import { AudioPlaybackService } from '../../services/audio-playback.service';
 import { BeatGridComponent } from '../beat-grid/beat-grid.component';
@@ -11,7 +12,7 @@ import { Subscription } from 'rxjs';
 @Component({
     selector: 'app-deck',
     standalone: true,
-    imports: [CommonModule, ButtonModule, SliderModule, FormsModule, BeatGridComponent],
+    imports: [CommonModule, ButtonModule, SliderModule, FormsModule, ToggleSwitchModule, BeatGridComponent],
     templateUrl: './deck.component.html',
     styleUrls: ['./deck.component.scss'],
     providers: [AudioPlaybackService] // Provide a separate instance for each deck
@@ -55,6 +56,8 @@ export class DeckComponent implements OnInit, OnDestroy {
     beatGrid: number[] = [];
     trackDuration: number = 0;
     currentPlaybackPosition: number = 0;
+    waveformData: number[] = [];
+    showWaveform: boolean = true; // Toggle between waveform+beats and beats-only
 
     // File loading
     isDragOver: boolean = false;
@@ -347,10 +350,11 @@ export class DeckComponent implements OnInit, OnDestroy {
             const trackDuration = this.audioPlaybackService.getDuration();
             this.duration = this.formatTime(trackDuration);
 
-            // Analyze BPM, Key, and Beat Grid in parallel
-            const [detectedBPM, detectedKey, beatGridData] = await Promise.all([
+            // Analyze BPM, Key, Waveform, and Beat Grid in parallel
+            const [detectedBPM, detectedKey, waveform, beatGridData] = await Promise.all([
                 this.audioAnalysisService.analyzeBPM(file),
                 this.audioAnalysisService.analyzeKey(file),
+                this.audioAnalysisService.extractWaveform(file),
                 this.audioAnalysisService.extractBeatGrid(file)
             ]);
 
@@ -358,6 +362,7 @@ export class DeckComponent implements OnInit, OnDestroy {
             this.originalBPM = detectedBPM; // Store original BPM
             this.bpm = detectedBPM; // Display original BPM initially
             this.key = detectedKey;
+            this.waveformData = waveform;
             this.beatGrid = beatGridData;
             this.trackDuration = trackDuration;
 

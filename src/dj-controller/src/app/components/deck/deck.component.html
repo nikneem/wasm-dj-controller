@@ -3,6 +3,10 @@
     <div class="lcd-display">
         <div class="lcd-header">
             <div class="lcd-deck-number">DECK {{ deckNumber }}</div>
+            <div class="lcd-view-toggle">
+                <span class="toggle-label">{{ showWaveform ? 'WAVEFORM' : 'BEATS ONLY' }}</span>
+                <p-toggleSwitch [(ngModel)]="showWaveform" [style]="{'width': '50px'}"></p-toggleSwitch>
+            </div>
             <div class="lcd-status">
                 <span class="status-indicator" [class.playing]="isPlaying"></span>
                 <span class="status-text">{{ isPlaying ? 'PLAYING' : isCued ? 'CUED' : 'STOPPED' }}</span>
@@ -16,7 +20,7 @@
 
         <div class="lcd-waveform">
             <app-beat-grid *ngIf="beatGrid.length > 0" [beatGrid]="beatGrid" [duration]="trackDuration"
-                [playbackPosition]="currentPlaybackPosition">
+                [playbackPosition]="currentPlaybackPosition" [waveformData]="showWaveform ? waveformData : []">
             </app-beat-grid>
             <div class="no-track-message" *ngIf="beatGrid.length === 0">
                 Drop audio file to load track
