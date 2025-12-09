@@ -90,7 +90,6 @@ impl PitchShifter {
 
         // For pitch shifting, we need to resample the time-stretched audio
         // A higher pitch ratio means we read faster from the buffer
-        let mut read_idx = 0.0;
 
         for i in 0..buffer.len() {
             let idx = (i as f32) * pitch_ratio;

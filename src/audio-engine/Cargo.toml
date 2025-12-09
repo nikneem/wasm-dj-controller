@@ -6,6 +6,9 @@ description = "High-performance WebAssembly audio processing engine for DJ contr
 license = "MIT"
 authors = ["nikneem"]
 
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
+
 [lib]
 crate-type = ["cdylib", "rlib"]
 

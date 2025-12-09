@@ -19,7 +19,7 @@
 //! 4. Stretching or compressing the time axis
 //! 5. Resynthesizing audio using modified phase and original magnitude
 
-use rustfft::{FftPlanner, num_complex::Complex};
+use rustfft::FftPlanner;
 
 /// Phase vocoder for time-stretching without pitch change
 ///

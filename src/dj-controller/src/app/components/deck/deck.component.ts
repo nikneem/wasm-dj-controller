@@ -5,7 +5,7 @@ import { ButtonModule } from 'primeng/button';
 import { SliderModule } from 'primeng/slider';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { AudioAnalysisService } from '../../services/audio-analysis.service';
-import { AudioPlaybackService } from '../../services/audio-playback.service';
+import { AudioEngineService } from '../../services/audio-engine.service';
 import { BeatGridComponent } from '../beat-grid/beat-grid.component';
 import { Subscription } from 'rxjs';
 
@@ -15,7 +15,7 @@ import { Subscription } from 'rxjs';
     imports: [CommonModule, ButtonModule, SliderModule, FormsModule, ToggleSwitchModule, BeatGridComponent],
     templateUrl: './deck.component.html',
     styleUrls: ['./deck.component.scss'],
-    providers: [AudioPlaybackService] // Provide a separate instance for each deck
+    providers: [AudioEngineService] // Provide a separate instance for each deck
 })
 export class DeckComponent implements OnInit, OnDestroy {
     @Input() deckSide: 'left' | 'right' = 'left';
@@ -74,12 +74,12 @@ export class DeckComponent implements OnInit, OnDestroy {
 
     constructor(
         private audioAnalysisService: AudioAnalysisService,
-        private audioPlaybackService: AudioPlaybackService
+        private audioEngineService: AudioEngineService
     ) { }
 
     ngOnInit(): void {
         // Subscribe to playback time updates
-        this.playbackTimeSubscription = this.audioPlaybackService.playbackTime$.subscribe(
+        this.playbackTimeSubscription = this.audioEngineService.playbackTime$.subscribe(
             (time: number) => {
                 this.currentTime = this.formatTime(time);
                 this.currentPlaybackPosition = time;
@@ -87,7 +87,7 @@ export class DeckComponent implements OnInit, OnDestroy {
         );
 
         // Subscribe to playback ended event
-        this.playbackEndedSubscription = this.audioPlaybackService.playbackEnded$.subscribe(
+        this.playbackEndedSubscription = this.audioEngineService.playbackEnded$.subscribe(
             () => {
                 this.isPlaying = false;
                 this.isPaused = false;
@@ -112,19 +112,19 @@ export class DeckComponent implements OnInit, OnDestroy {
         if (this.isPlaying) {
             // If playing, pause and start flashing
             console.log('[Deck] Pausing playback');
-            this.audioPlaybackService.pause();
+            this.audioEngineService.pause();
             this.isPlaying = false;
             this.isPaused = true;
         } else if (this.isPaused) {
             // If paused (after play), resume playing
             console.log('[Deck] Resuming from pause');
-            this.audioPlaybackService.play();
+            this.audioEngineService.play();
             this.isPaused = false;
             this.isPlaying = true;
         } else {
             // If stopped, start playing
             console.log('[Deck] Starting playback from beginning');
-            this.audioPlaybackService.play();
+            this.audioEngineService.play();
             this.isPlaying = true;
         }
     }
@@ -138,14 +138,14 @@ export class DeckComponent implements OnInit, OnDestroy {
         if (this.isPlaying) {
             // If track is playing, jump to cue point and stop
             const seekTime = this.cuePoint || 0;
-            this.audioPlaybackService.seek(seekTime);
-            this.audioPlaybackService.pause();
+            this.audioEngineService.seek(seekTime);
+            this.audioEngineService.pause();
             this.isPlaying = false;
             this.isPaused = false;
             this.isCued = true;
         } else {
             // If paused or stopped, remember current position as cue point
-            this.cuePoint = this.audioPlaybackService.getCurrentTime();
+            this.cuePoint = this.audioEngineService.getCurrentTime();
             this.isCued = true;
         }
     }
@@ -174,12 +174,10 @@ export class DeckComponent implements OnInit, OnDestroy {
             ? `+${value.toFixed(2)}%`
             : `${value.toFixed(2)}%`;
 
-        // Apply tempo to audio service
-        // In pitch mode, changing playback rate affects both speed and pitch
-        // In tempo mode (key lock), only tempo changes while maintaining key/pitch
-        // Note: Currently both modes use playback rate. Future enhancement would use
-        // a pitch shifter/time stretcher for true tempo-only adjustment
-        this.audioPlaybackService.setTempoPercent(value);
+        // Apply tempo to audio engine with mode
+        // TEMPO mode (isPitchMode = false): Preserve pitch using phase vocoder
+        // PITCH mode (isPitchMode = true): Natural pitch change with speed
+        this.audioEngineService.setTempoPercent(value, this.isPitchMode);
 
         // Update BPM based on tempo (with decimal precision)
         if (this.originalBPM > 0) {
@@ -258,10 +256,10 @@ export class DeckComponent implements OnInit, OnDestroy {
         // Convert rotation delta to seek amount in seconds
         // Full rotation (360°) = 5 seconds
         const seekAmount = (rotationDelta / 360) * 5;
-        const currentTime = this.audioPlaybackService.getCurrentTime();
+        const currentTime = this.audioEngineService.getCurrentTime();
         const newTime = Math.max(0, Math.min(this.trackDuration, currentTime + seekAmount));
 
-        this.audioPlaybackService.seek(newTime);
+        this.audioEngineService.seek(newTime);
 
         // Update playback position for beat grid sync
         this.currentPlaybackPosition = newTime;
@@ -277,7 +275,7 @@ export class DeckComponent implements OnInit, OnDestroy {
         const clampedTempo = Math.max(-50, Math.min(50, totalTempo));
 
         // Apply pitch bend without saving to tempoValue
-        this.audioPlaybackService.setTempoPercent(clampedTempo);
+        this.audioEngineService.setTempoPercent(clampedTempo, this.isPitchMode);
 
         // Update BPM display to show bent tempo
         if (this.originalBPM > 0) {
@@ -351,8 +349,8 @@ export class DeckComponent implements OnInit, OnDestroy {
         this.isAnalyzing = true;
 
         try {
-            // Load track for playback service first
-            await this.audioPlaybackService.loadTrack(file);
+            // Load track for audio engine first
+            await this.audioEngineService.loadTrack(file);
 
             // Reset playback state
             this.isPlaying = false;
@@ -365,10 +363,10 @@ export class DeckComponent implements OnInit, OnDestroy {
             // Reset tempo to 0%
             this.tempoValue = 0;
             this.tempoPercent = '0.00%';
-            this.audioPlaybackService.setTempoPercent(0);
+            this.audioEngineService.setTempoPercent(0, this.isPitchMode);
 
             // Set duration from loaded track
-            const trackDuration = this.audioPlaybackService.getDuration();
+            const trackDuration = this.audioEngineService.getDuration();
             this.duration = this.formatTime(trackDuration);
 
             // Analyze BPM, Key, Waveform, and Beat Grid in parallel

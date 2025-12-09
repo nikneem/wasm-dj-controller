@@ -17,6 +17,8 @@ export class AudioPlaybackService {
     private isPlayingFlag: boolean = false;
     private currentPlaybackPosition: number = 0; // Track position explicitly
     private playbackRate: number = 1.0; // Tempo/playback rate (1.0 = normal speed)
+    private preservePitch: boolean = true; // When true, use detune to preserve pitch
+    private detuneValue: number = 0; // Detune in cents to compensate for playback rate
 
     // Observable for playback time updates
     private playbackTimeSubject = new Subject<number>();
@@ -120,6 +122,11 @@ export class AudioPlaybackService {
 
         // Apply playback rate (tempo)
         this.sourceNode.playbackRate.value = this.playbackRate;
+
+        // Apply detune if preserving pitch (tempo mode)
+        if (this.preservePitch && this.sourceNode.detune) {
+            this.sourceNode.detune.value = this.detuneValue;
+        }
 
         // Calculate startTime for accurate position tracking
         // We need: getCurrentTime() = (audioContext.currentTime - startTime) * playbackRate = startPosition
@@ -274,12 +281,25 @@ export class AudioPlaybackService {
         // Clamp rate between 0.5 and 2.0 (typical DJ controller range)
         this.playbackRate = Math.max(0.5, Math.min(2.0, rate));
 
+        // Calculate detune compensation to preserve pitch
+        // Detune is in cents (100 cents = 1 semitone)
+        // Formula: cents = 1200 * log2(playbackRate)
+        if (this.preservePitch) {
+            this.detuneValue = -1200 * Math.log2(this.playbackRate);
+        } else {
+            this.detuneValue = 0;
+        }
+
         // Apply to currently playing source
         if (this.sourceNode && this.isPlayingFlag) {
             this.sourceNode.playbackRate.value = this.playbackRate;
+            if (this.sourceNode.detune) {
+                this.sourceNode.detune.value = this.detuneValue;
+            }
         }
 
-        console.log('[AudioPlayback] Playback rate set to:', this.playbackRate);
+        const mode = this.preservePitch ? 'TEMPO (pitch preserved)' : 'PITCH (natural)';
+        console.log('[AudioPlayback] Playback rate set to:', this.playbackRate, '- Mode:', mode, '- Detune:', this.detuneValue.toFixed(2), 'cents');
     }
 
     /**
@@ -290,14 +310,31 @@ export class AudioPlaybackService {
     }
 
     /**
+     * Set whether to preserve pitch when changing tempo
+     * @param preserve - True for tempo mode (key lock), false for pitch mode
+     */
+    setPreservePitch(preserve: boolean): void {
+        this.preservePitch = preserve;
+        // Recalculate and apply current settings
+        this.setPlaybackRate(this.playbackRate);
+    }
+
+    /**
+     * Get current preserve pitch setting
+     */
+    getPreservePitch(): boolean {
+        return this.preservePitch;
+    }
+
+    /**
      * Convert tempo percentage to playback rate
-     * Tempo range: -8 to +8 (in percentage)
+     * Tempo range: -16 to +16 (in percentage)
      * Conversion: playbackRate = 1.0 + (tempoPercent / 100)
-     * @param tempoPercent - Tempo percentage (-8 to +8)
+     * @param tempoPercent - Tempo percentage (-16 to +16)
      */
     setTempoPercent(tempoPercent: number): void {
-        // Clamp to -8 to +8 range
-        const clamped = Math.max(-8, Math.min(8, tempoPercent));
+        // Clamp to -16 to +16 range
+        const clamped = Math.max(-16, Math.min(16, tempoPercent));
         const playbackRate = 1.0 + (clamped / 100);
         this.setPlaybackRate(playbackRate);
     }

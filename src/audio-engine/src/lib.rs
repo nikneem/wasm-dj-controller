@@ -140,15 +140,15 @@ impl AudioProcessor {
         self.fader.process(&mut left, &mut right, frame_size);
 
         // Stage 3: Apply pitch shifting (modifies buffer in-place)
-        self.pitch_shifter.process_stereo(&mut left, &mut right, frame_size);
+        self.pitch_shifter.process_stereo(&mut left, &mut right);
 
         // Stage 4: Apply 3-band equalizer
-        self.equalizer.process(&mut left, frame_size);
-        self.equalizer.process(&mut right, frame_size);
+        self.equalizer.process(&mut left);
+        self.equalizer.process(&mut right);
 
         // Stage 5: Apply master volume and create output
         let mut output = vec![0.0; frame_size * 2];
-        let mut peak = 0.0;
+        let mut peak: f32 = 0.0;
         
         for i in 0..frame_size {
             let left_sample = left[i] * self.master_volume;
