@@ -1,0 +1,549 @@
+@use '../../../styles/variables' as *;
+
+.deck-container {
+    background: linear-gradient(135deg, $bg-tertiary 0%, $bg-secondary 100%);
+    border: 2px solid $border-primary;
+    border-radius: $radius-lg;
+    padding: $space-lg;
+    box-shadow: $shadow-xl;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: $space-lg;
+
+    &.deck-left {
+        border-color: rgba($primary-orange, 0.3);
+    }
+
+    &.deck-right {
+        border-color: rgba($secondary-green, 0.3);
+    }
+}
+
+// ============================================
+// LCD Display
+// ============================================
+
+.lcd-display {
+    background: linear-gradient(to bottom, #1a2e1a 0%, #0d1a0d 100%);
+    border: 3px solid #2a3a2a;
+    border-radius: $radius-md;
+    padding: $space-md;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8);
+    font-family: 'Courier New', monospace;
+    color: #00ff41;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    gap: $space-sm;
+}
+
+.lcd-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: $font-size-xs;
+    padding-bottom: $space-xs;
+    border-bottom: 1px solid rgba(0, 255, 65, 0.2);
+}
+
+.lcd-deck-number {
+    font-weight: $font-weight-bold;
+    letter-spacing: 2px;
+}
+
+.lcd-status {
+    display: flex;
+    align-items: center;
+    gap: $space-xs;
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #2a3a2a;
+
+    &.playing {
+        background: #00ff41;
+        box-shadow: 0 0 8px #00ff41;
+        animation: pulse-green 1s ease-in-out infinite;
+    }
+}
+
+@keyframes pulse-green {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.lcd-track-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: $space-xs;
+}
+
+.track-title {
+    font-size: $font-size-md;
+    font-weight: $font-weight-bold;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.track-artist {
+    font-size: $font-size-sm;
+    opacity: 0.8;
+}
+
+.lcd-waveform {
+    height: 60px;
+    position: relative;
+    margin: $space-sm 0;
+}
+
+.waveform-container {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    gap: 1px;
+    position: relative;
+}
+
+.waveform-bar {
+    flex: 1;
+    background: #00ff41;
+    opacity: 0.6;
+    border-radius: 1px;
+    min-height: 2px;
+    transition: height 0.1s ease;
+}
+
+.playhead {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #ff6b35;
+    box-shadow: 0 0 10px #ff6b35;
+    z-index: 10;
+}
+
+.lcd-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: $font-size-sm;
+    padding-top: $space-xs;
+    border-top: 1px solid rgba(0, 255, 65, 0.2);
+}
+
+.time-display {
+    display: flex;
+    gap: $space-xs;
+    font-weight: $font-weight-bold;
+}
+
+.track-meta {
+    display: flex;
+    gap: $space-md;
+    font-size: $font-size-xs;
+
+    .bpm,
+    .key {
+        padding: 2px $space-xs;
+        background: rgba(0, 255, 65, 0.1);
+        border-radius: $radius-sm;
+    }
+}
+
+// ============================================
+// Loop Controls
+// ============================================
+
+.loop-controls {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: $space-sm;
+}
+
+.loop-btn {
+    background: $bg-darker !important;
+    border: 2px solid $border-primary !important;
+    color: $text-secondary !important;
+    font-weight: $font-weight-bold !important;
+    font-size: $font-size-xs !important;
+    padding: $space-sm !important;
+    transition: all $transition-fast !important;
+
+    &:hover:not(:disabled) {
+        border-color: $primary-orange !important;
+        color: $primary-orange !important;
+    }
+
+    &.active {
+        background: $primary-orange !important;
+        border-color: $primary-orange !important;
+        color: $text-white !important;
+        box-shadow: 0 0 10px rgba($primary-orange, 0.5);
+    }
+
+    &:disabled {
+        opacity: 0.3 !important;
+        cursor: not-allowed !important;
+    }
+}
+
+// ============================================
+// Main Controls
+// ============================================
+
+.main-controls {
+    display: grid;
+    grid-template-columns: 120px 1fr 100px;
+    gap: $space-lg;
+    align-items: center;
+    min-height: 300px;
+}
+
+// Transport Controls
+.transport-controls {
+    display: flex;
+    flex-direction: column;
+    gap: $space-md;
+}
+
+.transport-btn {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: $bg-darker;
+    border: none;
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: $space-xs;
+    transition: all $transition-fast;
+
+    &:hover {
+        transform: scale(1.05);
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
+}
+
+.led-rim {
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    right: -4px;
+    bottom: -4px;
+    border-radius: 50%;
+    border: 4px solid;
+    transition: all $transition-fast;
+
+    &.led-orange {
+        border-color: rgba($primary-orange, 0.3);
+
+        &.lit {
+            border-color: $primary-orange;
+            box-shadow: 0 0 20px $primary-orange, inset 0 0 10px rgba($primary-orange, 0.3);
+            animation: led-glow-orange 1.5s ease-in-out infinite;
+        }
+    }
+
+    &.led-green {
+        border-color: rgba($secondary-green, 0.3);
+
+        &.lit {
+            border-color: $success;
+            box-shadow: 0 0 20px $success, inset 0 0 10px rgba($success, 0.3);
+            animation: led-glow-green 1.5s ease-in-out infinite;
+        }
+    }
+}
+
+@keyframes led-glow-orange {
+
+    0%,
+    100% {
+        box-shadow: 0 0 20px $primary-orange, inset 0 0 10px rgba($primary-orange, 0.3);
+    }
+
+    50% {
+        box-shadow: 0 0 30px $primary-orange, inset 0 0 15px rgba($primary-orange, 0.5);
+    }
+}
+
+@keyframes led-glow-green {
+
+    0%,
+    100% {
+        box-shadow: 0 0 20px $success, inset 0 0 10px rgba($success, 0.3);
+    }
+
+    50% {
+        box-shadow: 0 0 30px $success, inset 0 0 15px rgba($success, 0.5);
+    }
+}
+
+.cue-btn {
+    .btn-label {
+        font-size: $font-size-lg;
+        font-weight: $font-weight-bold;
+        color: $text-primary;
+        z-index: 1;
+    }
+}
+
+.play-btn {
+    i {
+        font-size: $font-size-3xl;
+        color: $text-primary;
+        z-index: 1;
+    }
+}
+
+// Jog Wheel
+.jog-wheel-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-md;
+}
+
+.jog-wheel {
+    width: 250px;
+    height: 250px;
+    border-radius: 50%;
+    position: relative;
+    cursor: grab;
+    transition: transform 0.05s linear;
+
+    &.touched {
+        cursor: grabbing;
+    }
+}
+
+.jog-wheel-surface {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    right: 15px;
+    bottom: 15px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, $bg-elevated, $bg-darkest);
+    box-shadow:
+        inset 0 0 30px rgba(0, 0, 0, 0.8),
+        0 5px 15px rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.jog-center-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: $primary-orange;
+    box-shadow: 0 0 10px $primary-orange;
+}
+
+.jog-marking {
+    position: absolute;
+    width: 3px;
+    height: 20px;
+    background: rgba($text-secondary, 0.5);
+    top: 10px;
+    left: 50%;
+    margin-left: -1.5px;
+    transform-origin: center 105px;
+}
+
+.jog-rim {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 50%;
+    border: 15px solid $bg-secondary;
+    box-shadow:
+        0 0 0 2px $border-light,
+        inset 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.jog-label {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-bold;
+    color: $text-secondary;
+    letter-spacing: 2px;
+}
+
+// Tempo Control
+.tempo-control {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-sm;
+    height: 100%;
+}
+
+.tempo-label {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-bold;
+    color: $text-secondary;
+    letter-spacing: 2px;
+}
+
+.tempo-display {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-bold;
+    color: $primary-orange;
+    font-family: 'Courier New', monospace;
+    min-width: 80px;
+    text-align: center;
+    padding: $space-xs $space-sm;
+    background: $bg-darker;
+    border: 1px solid $border-primary;
+    border-radius: $radius-sm;
+}
+
+.tempo-slider-container {
+    flex: 1;
+    display: flex;
+    gap: $space-sm;
+    align-items: stretch;
+    position: relative;
+}
+
+::ng-deep .tempo-slider {
+    height: 100% !important;
+
+    .p-slider {
+        background: $bg-darker !important;
+        border: 2px solid $border-primary !important;
+        width: 40px !important;
+    }
+
+    .p-slider-range {
+        background: $primary-orange !important;
+    }
+
+    .p-slider-handle {
+        width: 50px !important;
+        height: 30px !important;
+        border-radius: $radius-sm !important;
+        background: linear-gradient(to bottom, $bg-elevated, $bg-secondary) !important;
+        border: 2px solid $primary-orange !important;
+        margin-left: -25px !important;
+
+        &:hover {
+            background: linear-gradient(to bottom, #3a3a3a, $bg-secondary) !important;
+        }
+    }
+}
+
+.tempo-markers {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-size: $font-size-xs;
+    color: $text-tertiary;
+    padding: $space-xs 0;
+
+    .marker {
+        &.center {
+            color: $primary-orange;
+            font-weight: $font-weight-bold;
+        }
+    }
+}
+
+// ============================================
+// Footer
+// ============================================
+
+.deck-footer {
+    display: flex;
+    justify-content: center;
+}
+
+.load-track-btn {
+    width: 100%;
+    font-weight: $font-weight-bold !important;
+    background: transparent !important;
+    border-color: $primary-orange !important;
+    color: $primary-orange !important;
+
+    &:hover {
+        background: rgba($primary-orange, 0.1) !important;
+    }
+}
+
+// ============================================
+// Responsive Design
+// ============================================
+
+@media (max-width: 1400px) {
+    .main-controls {
+        grid-template-columns: 100px 1fr 80px;
+    }
+
+    .jog-wheel {
+        width: 200px;
+        height: 200px;
+    }
+
+    .transport-btn {
+        width: 80px;
+        height: 80px;
+    }
+}
+
+@media (max-width: 1200px) {
+    .main-controls {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+    }
+
+    .transport-controls {
+        flex-direction: row;
+        justify-content: center;
+    }
+
+    .tempo-slider-container {
+        flex-direction: row;
+        height: 40px;
+
+        ::ng-deep .tempo-slider {
+            width: 100% !important;
+            height: 40px !important;
+
+            .p-slider {
+                height: 40px !important;
+                width: 100% !important;
+            }
+        }
+    }
+
+    .tempo-markers {
+        flex-direction: row;
+        width: 100%;
+        justify-content: space-between;
+    }
+}

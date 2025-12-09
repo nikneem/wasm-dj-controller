@@ -4,5 +4,9 @@ export const routes: Routes = [
     {
         path: '',
         loadComponent: () => import('./pages/home/home-page/home-page').then(m => m.HomePage)
+    },
+    {
+        path: 'controller',
+        loadComponent: () => import('./pages/controller/controller-page.component').then(m => m.ControllerPageComponent)
     }
 ];

@@ -25,13 +25,13 @@
     --surface-50: #{$bg-secondary};
     --surface-100: #{$bg-tertiary};
     --surface-200: #{$bg-elevated};
-    --surface-300: #{lighten($bg-elevated, 5%)};
-    --surface-400: #{lighten($bg-elevated, 10%)};
-    --surface-500: #{lighten($bg-elevated, 15%)};
-    --surface-600: #{lighten($bg-elevated, 20%)};
-    --surface-700: #{lighten($bg-elevated, 25%)};
-    --surface-800: #{lighten($bg-elevated, 30%)};
-    --surface-900: #{lighten($bg-elevated, 35%)};
+    --surface-300: #{color.adjust($bg-elevated, $lightness: 5%)};
+    --surface-400: #{color.adjust($bg-elevated, $lightness: 10%)};
+    --surface-500: #{color.adjust($bg-elevated, $lightness: 15%)};
+    --surface-600: #{color.adjust($bg-elevated, $lightness: 20%)};
+    --surface-700: #{color.adjust($bg-elevated, $lightness: 25%)};
+    --surface-800: #{color.adjust($bg-elevated, $lightness: 30%)};
+    --surface-900: #{color.adjust($bg-elevated, $lightness: 35%)};
 
     // Text colors
     --text-color: #{$text-primary};

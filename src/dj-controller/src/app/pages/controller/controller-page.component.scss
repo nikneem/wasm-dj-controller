@@ -1,0 +1,356 @@
+@use '../../../styles/variables' as *;
+
+// ============================================
+// Controller Page Layout
+// ============================================
+
+.controller-page {
+    width: 100%;
+    height: 100vh;
+    background: $bg-primary;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.controller-layout {
+    display: grid;
+    grid-template-columns: 40% 20% 40%;
+    gap: $space-md;
+    height: 100%;
+    padding: $space-md;
+    overflow: hidden;
+}
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+
+    &.panel-left {
+        // Orange accent for left deck
+    }
+
+    &.panel-center {
+        // Neutral center area
+    }
+
+    &.panel-right {
+        // Green accent for right deck
+    }
+}
+
+// ============================================
+// Mixer Section (Center Panel)
+// ============================================
+
+.mixer-section {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: $space-lg;
+    padding: $space-md;
+    background: linear-gradient(135deg, $bg-secondary 0%, $bg-tertiary 100%);
+    border: 2px solid $border-primary;
+    border-radius: $radius-lg;
+    box-shadow: $shadow-lg;
+}
+
+.mixer-title {
+    text-align: center;
+    font-size: $font-size-lg;
+    font-weight: $font-weight-bold;
+    color: $text-primary;
+    margin: 0;
+    padding: $space-sm 0;
+    border-bottom: 2px solid $border-light;
+    letter-spacing: 2px;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: $space-sm;
+    padding: $space-md;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: $radius-md;
+    border: 1px solid $border-light;
+}
+
+.control-label {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-bold;
+    color: $text-secondary;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.volume-display {
+    text-align: center;
+    font-family: 'Courier New', monospace;
+    font-size: $font-size-md;
+    font-weight: $font-weight-bold;
+    color: $primary-orange;
+    text-shadow: 0 0 5px rgba($primary-orange, 0.5);
+    padding: $space-xs 0;
+}
+
+.mixer-slider {
+    width: 100%;
+    height: 40px;
+    appearance: none;
+    -webkit-appearance: none;
+    background: $bg-darker;
+    border: 2px solid $border-light;
+    border-radius: $radius-md;
+    cursor: pointer;
+    padding: 0 5px;
+
+    // Webkit browsers
+    &::-webkit-slider-thumb {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, $primary-orange-light, $primary-orange-dark);
+        border: 2px solid $primary-orange;
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba($primary-orange, 0.6);
+
+        &:hover {
+            box-shadow: 0 0 15px rgba($primary-orange, 0.8);
+            transform: scale(1.1);
+        }
+    }
+
+    &::-webkit-slider-runnable-track {
+        background: $bg-darker;
+        height: 6px;
+        border-radius: $radius-sm;
+    }
+
+    // Firefox
+    &::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, $primary-orange-light, $primary-orange-dark);
+        border: 2px solid $primary-orange;
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba($primary-orange, 0.6);
+
+        &:hover {
+            box-shadow: 0 0 15px rgba($primary-orange, 0.8);
+            transform: scale(1.1);
+        }
+    }
+
+    &::-moz-range-track {
+        background: $bg-darker;
+        border-radius: $radius-sm;
+    }
+
+    // Vertical slider for master volume
+    &.vertical-slider {
+        writing-mode: bt-lr;
+        -webkit-appearance: slider-vertical;
+        width: 40px;
+        height: 150px;
+        align-self: center;
+    }
+}
+
+.crossfader-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: $space-sm;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-bold;
+    color: $text-secondary;
+
+    .crossfader-center {
+        opacity: 0.5;
+        transition: all $transition-fast;
+
+        &.active {
+            color: $secondary-green;
+            opacity: 1;
+            text-shadow: 0 0 10px rgba($secondary-green, 0.6);
+        }
+    }
+}
+
+.slider-scale {
+    display: flex;
+    justify-content: space-between;
+    font-size: $font-size-xs;
+    color: $text-tertiary;
+    padding: 0 $space-sm;
+}
+
+// BPM Input
+.bpm-input {
+    display: flex;
+    justify-content: center;
+}
+
+.bpm-field {
+    width: 80px;
+    padding: $space-sm;
+    background: $bg-darker;
+    border: 2px solid $border-light;
+    border-radius: $radius-md;
+    color: $primary-orange;
+    font-family: 'Courier New', monospace;
+    font-size: $font-size-md;
+    font-weight: $font-weight-bold;
+    text-align: center;
+    transition: all $transition-fast;
+
+    &:focus {
+        outline: none;
+        border-color: $primary-orange;
+        box-shadow: 0 0 10px rgba($primary-orange, 0.4);
+    }
+
+    &::placeholder {
+        color: $text-tertiary;
+    }
+
+    // Hide spinner arrows
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    &[type=number] {
+        -moz-appearance: textfield;
+    }
+}
+
+// Status Section
+.status-group {
+    display: flex;
+    flex-direction: column;
+    gap: $space-sm;
+    margin-top: auto;
+    padding-top: $space-md;
+    border-top: 1px solid $border-light;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: $space-sm;
+    font-size: $font-size-xs;
+    color: $text-secondary;
+
+    .status-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: $error;
+        transition: all $transition-fast;
+    }
+
+    &.connected {
+        color: $success;
+
+        .status-indicator {
+            background: $success;
+            box-shadow: 0 0 8px $success;
+            animation: status-pulse 1s ease-in-out infinite;
+        }
+    }
+}
+
+@keyframes status-pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+// ============================================
+// Responsive Design
+// ============================================
+
+@media (max-width: 1920px) {
+    .controller-layout {
+        gap: $space-sm;
+        padding: $space-sm;
+    }
+}
+
+@media (max-width: 1600px) {
+    .mixer-section {
+        gap: $space-md;
+        padding: $space-sm;
+    }
+
+    .control-group {
+        padding: $space-sm;
+        gap: $space-xs;
+    }
+
+    .control-label {
+        font-size: $font-size-xs;
+    }
+}
+
+@media (max-width: 1280px) {
+
+    // Switch to 2-row layout for smaller screens
+    .controller-layout {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        gap: $space-md;
+    }
+
+    .panel-left {
+        grid-column: 1;
+        grid-row: 1 / 3;
+    }
+
+    .panel-center {
+        grid-column: 2;
+        grid-row: 1;
+    }
+
+    .panel-right {
+        grid-column: 2;
+        grid-row: 2;
+    }
+}
+
+@media (max-width: 768px) {
+
+    // Stack vertically for mobile
+    .controller-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        gap: $space-md;
+    }
+
+    .panel-left,
+    .panel-center,
+    .panel-right {
+        grid-column: 1;
+    }
+
+    .mixer-section {
+        max-height: 300px;
+    }
+
+    .control-group {
+        padding: $space-sm;
+    }
+}

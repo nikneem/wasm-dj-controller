@@ -1,0 +1,105 @@
+<div class="deck-container" [class.deck-left]="deckSide === 'left'" [class.deck-right]="deckSide === 'right'">
+    <!-- LCD Display Screen -->
+    <div class="lcd-display">
+        <div class="lcd-header">
+            <div class="lcd-deck-number">DECK {{ deckNumber }}</div>
+            <div class="lcd-status">
+                <span class="status-indicator" [class.playing]="isPlaying"></span>
+                <span class="status-text">{{ isPlaying ? 'PLAYING' : isCued ? 'CUED' : 'STOPPED' }}</span>
+            </div>
+        </div>
+
+        <div class="lcd-track-info">
+            <div class="track-title">{{ trackTitle }}</div>
+            <div class="track-artist" *ngIf="artist">{{ artist }}</div>
+        </div>
+
+        <div class="lcd-waveform">
+            <div class="waveform-container">
+                <div class="waveform-bar" *ngFor="let height of waveformBars; let i = index" [style.height.%]="height">
+                </div>
+                <div class="playhead"></div>
+            </div>
+        </div>
+
+        <div class="lcd-footer">
+            <div class="time-display">
+                <span class="current-time">{{ currentTime }}</span>
+                <span class="separator">/</span>
+                <span class="total-time">{{ duration }}</span>
+            </div>
+            <div class="track-meta">
+                <span class="bpm" *ngIf="bpm > 0">{{ bpm }} BPM</span>
+                <span class="key" *ngIf="key">{{ key }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loop Controls -->
+    <div class="loop-controls">
+        <button pButton label="A" class="loop-btn loop-a" [class.active]="loopStart !== null"
+            (click)="onSetLoopPoint('A')">
+        </button>
+        <button pButton label="B" class="loop-btn loop-b" [class.active]="loopEnd !== null"
+            (click)="onSetLoopPoint('B')">
+        </button>
+        <button pButton label="REPEAT" class="loop-btn loop-repeat" [class.active]="isLooping"
+            [disabled]="loopStart === null || loopEnd === null" (click)="onToggleLoop()">
+        </button>
+        <button pButton label="EXIT" class="loop-btn loop-exit" [disabled]="!isLooping" (click)="onExitLoop()">
+        </button>
+    </div>
+
+    <!-- Main Control Area -->
+    <div class="main-controls">
+        <!-- Transport Controls (Left) -->
+        <div class="transport-controls">
+            <button class="transport-btn cue-btn" [class.active]="isCued" (click)="onCue()">
+                <div class="led-rim led-orange" [class.lit]="isCued"></div>
+                <span class="btn-label">CUE</span>
+            </button>
+            <button class="transport-btn play-btn" [class.active]="isPlaying" (click)="onPlayPause()">
+                <div class="led-rim led-green" [class.lit]="isPlaying"></div>
+                <i class="pi" [class.pi-play]="!isPlaying" [class.pi-pause]="isPlaying"></i>
+            </button>
+        </div>
+
+        <!-- Jog Wheel (Center) -->
+        <div class="jog-wheel-container">
+            <div class="jog-wheel" [class.touched]="isJogTouched" [style.transform]="'rotate(' + jogRotation + 'deg)'"
+                (mousedown)="onJogMouseDown()" (mouseup)="onJogMouseUp()" (mousemove)="onJogRotate($event)">
+                <div class="jog-wheel-surface">
+                    <div class="jog-center-dot"></div>
+                    <div class="jog-marking" *ngFor="let mark of [0,1,2,3,4,5,6,7]"
+                        [style.transform]="'rotate(' + (mark * 45) + 'deg)'">
+                    </div>
+                </div>
+                <div class="jog-rim"></div>
+            </div>
+            <div class="jog-label">JOG WHEEL</div>
+        </div>
+
+        <!-- Tempo Control (Right) -->
+        <div class="tempo-control">
+            <div class="tempo-label">TEMPO</div>
+            <div class="tempo-display">{{ tempoPercent }}</div>
+            <div class="tempo-slider-container">
+                <p-slider [(ngModel)]="tempoValue" [min]="-8" [max]="8" [step]="0.01" orientation="vertical"
+                    (onChange)="onTempoChange(tempoValue)" class="tempo-slider">
+                </p-slider>
+                <div class="tempo-markers">
+                    <span class="marker">+8</span>
+                    <span class="marker center">0</span>
+                    <span class="marker">-8</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Track Button -->
+    <div class="deck-footer">
+        <button pButton label="LOAD TRACK" icon="pi pi-folder-open" class="p-button-outlined load-track-btn"
+            (click)="onLoadTrack()">
+        </button>
+    </div>
+</div>
