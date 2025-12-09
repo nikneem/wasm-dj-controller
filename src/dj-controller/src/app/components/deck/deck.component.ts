@@ -1,9 +1,11 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { SliderModule } from 'primeng/slider';
 import { AudioAnalysisService } from '../../services/audio-analysis.service';
+import { AudioPlaybackService } from '../../services/audio-playback.service';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-deck',
@@ -12,7 +14,7 @@ import { AudioAnalysisService } from '../../services/audio-analysis.service';
     templateUrl: './deck.component.html',
     styleUrls: ['./deck.component.scss']
 })
-export class DeckComponent implements OnInit {
+export class DeckComponent implements OnInit, OnDestroy {
     @Input() deckSide: 'left' | 'right' = 'left';
     @Input() deckNumber: number = 1;
 
@@ -50,37 +52,78 @@ export class DeckComponent implements OnInit {
     loadedFileName: string = '';
     isAnalyzing: boolean = false;
 
-    constructor(private audioAnalysisService: AudioAnalysisService) { }
+    // Subscriptions
+    private playbackTimeSubscription: Subscription | null = null;
+    private playbackEndedSubscription: Subscription | null = null;
+
+    constructor(
+        private audioAnalysisService: AudioAnalysisService,
+        private audioPlaybackService: AudioPlaybackService
+    ) { }
 
     ngOnInit(): void {
-        // Initialize component
+        // Subscribe to playback time updates
+        this.playbackTimeSubscription = this.audioPlaybackService.playbackTime$.subscribe(
+            (time: number) => {
+                this.currentTime = this.formatTime(time);
+            }
+        );
+
+        // Subscribe to playback ended event
+        this.playbackEndedSubscription = this.audioPlaybackService.playbackEnded$.subscribe(
+            () => {
+                this.isPlaying = false;
+                this.isPaused = false;
+            }
+        );
+    }
+
+    ngOnDestroy(): void {
+        // Unsubscribe from observables
+        this.playbackTimeSubscription?.unsubscribe();
+        this.playbackEndedSubscription?.unsubscribe();
     }
 
     onPlayPause(): void {
+        if (!this.loadedFileName) {
+            this.dragError = 'No track loaded';
+            return;
+        }
+
         if (this.isPlaying) {
             // If playing, pause and start flashing
+            this.audioPlaybackService.pause();
             this.isPlaying = false;
             this.isPaused = true;
         } else if (this.isPaused) {
             // If paused (after play), resume playing
+            this.audioPlaybackService.play();
             this.isPaused = false;
             this.isPlaying = true;
         } else {
             // If stopped, start playing
+            this.audioPlaybackService.play();
             this.isPlaying = true;
         }
     }
 
     onCue(): void {
+        if (!this.loadedFileName) {
+            this.dragError = 'No track loaded';
+            return;
+        }
+
         if (this.isPlaying) {
             // If track is playing, jump to cue point and stop
+            const seekTime = this.cuePoint || 0;
+            this.audioPlaybackService.seek(seekTime);
+            this.audioPlaybackService.pause();
             this.isPlaying = false;
             this.isPaused = false;
             this.isCued = true;
-            // In real implementation, would seek to this.cuePoint
         } else {
             // If paused or stopped, remember current position as cue point
-            this.cuePoint = this.parseTimeToSeconds(this.currentTime);
+            this.cuePoint = this.audioPlaybackService.getCurrentTime();
             this.isCued = true;
         }
     }
@@ -193,6 +236,13 @@ export class DeckComponent implements OnInit {
         this.isAnalyzing = true;
 
         try {
+            // Load track for playback service first
+            await this.audioPlaybackService.loadTrack(file);
+
+            // Set duration from loaded track
+            const trackDuration = this.audioPlaybackService.getDuration();
+            this.duration = this.formatTime(trackDuration);
+
             // Analyze BPM and Key in parallel
             const [detectedBPM, detectedKey] = await Promise.all([
                 this.audioAnalysisService.analyzeBPM(file),
@@ -203,17 +253,18 @@ export class DeckComponent implements OnInit {
             this.bpm = detectedBPM;
             this.key = detectedKey;
 
-            console.log(`Track Analysis - BPM: ${detectedBPM}, Key: ${detectedKey}`);
+            console.log(`Track Analysis - BPM: ${detectedBPM}, Key: ${detectedKey}, Duration: ${this.duration}`);
         } catch (error) {
             console.error('Error analyzing audio file:', error);
             this.dragError = 'Failed to analyze audio file';
         } finally {
             this.isAnalyzing = false;
         }
-    } private parseTimeToSeconds(timeStr: string): number {
-        const parts = timeStr.split(':');
-        const minutes = parseInt(parts[0], 10) || 0;
-        const seconds = parseInt(parts[1], 10) || 0;
-        return minutes * 60 + seconds;
+    }
+
+    private formatTime(seconds: number): string {
+        const minutes = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
     }
 }
