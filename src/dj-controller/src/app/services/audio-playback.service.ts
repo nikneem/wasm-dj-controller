@@ -16,6 +16,7 @@ export class AudioPlaybackService {
     private startTime: number = 0;
     private pauseTime: number = 0;
     private isPlayingFlag: boolean = false;
+    private currentPlaybackPosition: number = 0; // Track position explicitly
 
     // Observable for playback time updates
     private playbackTimeSubject = new Subject<number>();
@@ -50,12 +51,27 @@ export class AudioPlaybackService {
             const arrayBuffer = await this.readFileAsArrayBuffer(file);
             this.audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
 
+            // Reset playback state for new track
+            this.currentPlaybackPosition = 0;
+            this.pauseTime = 0;
+            this.isPlayingFlag = false;
+            if (this.sourceNode) {
+                try {
+                    this.sourceNode.stop();
+                } catch (e) {
+                    // Source may already be stopped
+                }
+            }
+            this.sourceNode = null;
+
             // Initialize gain node
             if (!this.gainNode) {
                 this.gainNode = this.audioContext.createGain();
                 this.gainNode.connect(this.audioContext.destination);
                 this.gainNode.gain.value = 0.8; // Default volume
             }
+
+            console.log('[AudioPlayback] Track loaded successfully - duration:', this.audioBuffer.duration);
 
             return this.audioBuffer;
         } catch (error) {
@@ -83,25 +99,34 @@ export class AudioPlaybackService {
             }
         }
 
-        // Determine start position - use fromTime if provided, otherwise resume from pauseTime
-        const startPosition = fromTime !== undefined ? fromTime : this.pauseTime;
+        // Determine start position
+        let startPosition: number;
+        if (fromTime !== undefined) {
+            startPosition = fromTime;
+        } else {
+            // Resume from stored position
+            startPosition = this.currentPlaybackPosition;
+        }
+
+        console.log('[AudioPlayback] play() - startPosition:', startPosition, 'currentPlaybackPosition:', this.currentPlaybackPosition, 'pauseTime:', this.pauseTime);
 
         // Create new source node
         this.sourceNode = this.audioContext.createBufferSource();
         this.sourceNode.buffer = this.audioBuffer;
         this.sourceNode.connect(this.gainNode);
 
-        // Calculate startTime so that getCurrentTime() returns the correct position
+        // Calculate startTime for accurate position tracking
         this.startTime = this.audioContext.currentTime - startPosition;
         this.isPlayingFlag = true;
 
         // Start playback from the calculated position
         this.sourceNode.start(0, startPosition);
+        console.log('[AudioPlayback] Playback started from:', startPosition, 'seconds, audioContext.currentTime:', this.audioContext.currentTime);
 
         // Handle end of track
         this.sourceNode.onended = () => {
             this.isPlayingFlag = false;
-            this.pauseTime = 0;
+            this.currentPlaybackPosition = 0;
             this.playbackEndedSubject.next();
         };
     }
@@ -111,12 +136,16 @@ export class AudioPlaybackService {
      */
     pause(): void {
         if (!this.isPlayingFlag || !this.sourceNode) {
+            console.log('[AudioPlayback] pause() called but not playing or no sourceNode');
             return;
         }
 
         // Calculate and store the exact pause position
         const currentTime = this.audioContext!.currentTime - this.startTime;
-        this.pauseTime = Math.max(0, Math.min(currentTime, this.audioBuffer!.duration));
+        this.currentPlaybackPosition = Math.max(0, Math.min(currentTime, this.audioBuffer!.duration));
+        this.pauseTime = this.currentPlaybackPosition; // Keep pauseTime in sync
+
+        console.log('[AudioPlayback] pause() - currentPlaybackPosition set to:', this.currentPlaybackPosition, 'calculated currentTime was:', currentTime);
 
         // Stop source
         try {
@@ -128,7 +157,7 @@ export class AudioPlaybackService {
         this.isPlayingFlag = false;
 
         // Emit the paused time to update UI
-        this.playbackTimeSubject.next(this.pauseTime);
+        this.playbackTimeSubject.next(this.currentPlaybackPosition);
     }
 
     /**
@@ -143,6 +172,7 @@ export class AudioPlaybackService {
             }
         }
 
+        this.currentPlaybackPosition = 0;
         this.pauseTime = 0;
         this.isPlayingFlag = false;
     }
@@ -158,10 +188,11 @@ export class AudioPlaybackService {
             this.pause();
         }
 
-        this.pauseTime = Math.max(0, Math.min(timeInSeconds, this.audioBuffer?.duration || 0));
+        this.currentPlaybackPosition = Math.max(0, Math.min(timeInSeconds, this.audioBuffer?.duration || 0));
+        this.pauseTime = this.currentPlaybackPosition;
 
         if (wasPlaying) {
-            this.play(this.pauseTime);
+            this.play(this.currentPlaybackPosition);
         }
     }
 
@@ -170,15 +201,18 @@ export class AudioPlaybackService {
      */
     getCurrentTime(): number {
         if (!this.isPlayingFlag) {
-            return this.pauseTime;
+            // When not playing, return the stored position
+            return this.currentPlaybackPosition;
         }
 
         if (!this.audioContext) {
             return 0;
         }
 
-        const currentTime = this.audioContext.currentTime - this.startTime;
-        return Math.max(0, Math.min(currentTime, this.audioBuffer?.duration || 0));
+        // When playing, calculate position dynamically
+        const calculatedTime = this.audioContext.currentTime - this.startTime;
+        const clampedTime = Math.max(0, Math.min(calculatedTime, this.audioBuffer?.duration || 0));
+        return clampedTime;
     }
 
     /**
