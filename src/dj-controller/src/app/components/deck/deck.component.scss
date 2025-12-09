@@ -214,7 +214,7 @@
     grid-template-columns: 120px 1fr 100px;
     gap: $space-lg;
     flex: 1; // Stretch to fill available vertical space
-    min-height: 300px;
+    min-height: 400px;
     position: relative;
 }
 
@@ -434,9 +434,6 @@
     align-items: center;
     gap: $space-xs;
     padding: $space-xs $space-sm;
-    background: $bg-darker;
-    border: 1px solid $border-primary;
-    border-radius: $radius-sm;
 }
 
 .mode-label {
@@ -453,9 +450,6 @@
     align-items: center;
     gap: $space-xs;
     padding: $space-xs $space-sm;
-    background: $bg-darker;
-    border: 1px solid $border-primary;
-    border-radius: $radius-sm;
     margin-top: $space-xs;
 }
 
@@ -514,13 +508,8 @@
     height: 100% !important;
 
     .p-slider {
-        background: $bg-darker !important;
         border: 2px solid $border-primary !important;
         width: 40px !important;
-    }
-
-    .p-slider-range {
-        background: $primary-orange !important;
     }
 
     .p-slider-handle {

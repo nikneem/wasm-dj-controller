@@ -98,9 +98,9 @@
                     orientation="vertical" (onChange)="onTempoChange(tempoValue)" class="tempo-slider">
                 </p-slider>
                 <div class="tempo-markers">
-                    <span class="marker">+{{ tempoRange }}</span>
+                    <span class="marker">+{{ tempoRange | number:'2.0' }}%</span>
                     <span class="marker center">0</span>
-                    <span class="marker">-{{ tempoRange }}</span>
+                    <span class="marker">-{{ tempoRange | number:'2.0' }}%</span>
                 </div>
             </div>
             <div class="tempo-range-toggle">
