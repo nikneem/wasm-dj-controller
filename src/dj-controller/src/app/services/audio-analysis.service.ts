@@ -65,6 +65,28 @@ export class AudioAnalysisService {
         }
     }
 
+    /**
+     * Extract beat grid from an audio file
+     * @param file - The audio file to analyze
+     * @returns Promise resolving to array of beat positions in seconds
+     */
+    async extractBeatGrid(file: File): Promise<number[]> {
+        try {
+            const arrayBuffer = await this.readFileAsArrayBuffer(file);
+            const audioBuffer = await this.decodeAudioFile(arrayBuffer);
+
+            if (!audioBuffer) {
+                return [];
+            }
+
+            const samples = this.getMonoSamples(audioBuffer);
+            return this.detectBeats(samples, audioBuffer.sampleRate);
+        } catch (error) {
+            console.error('Beat grid extraction error:', error);
+            return [];
+        }
+    }
+
     private readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -127,21 +149,21 @@ export class AudioAnalysisService {
     }
 
     /**
-     * Detect BPM from audio samples using energy-based onset detection
+     * Detect BPM from audio samples using improved onset detection and autocorrelation
      * Client-side implementation
      */
     private detectBPM(samples: Float32Array, sampleRate: number): number {
         if (samples.length < sampleRate) {
-            return 120;
+            return 120.0;
         }
 
-        // Calculate energy frames
+        // Calculate energy frames with spectral flux
         const frameSize = 2048;
-        const hopSize = frameSize / 2;
+        const hopSize = 512; // Smaller hop for better resolution
         const numFrames = Math.floor((samples.length - frameSize) / hopSize);
 
         if (numFrames < 2) {
-            return 120;
+            return 120.0;
         }
 
         const energyFrames = new Float32Array(numFrames);
@@ -162,40 +184,91 @@ export class AudioAnalysisService {
             energyFrames[i] = Math.sqrt(sum / frameSize);
         }
 
-        // Detect onsets
-        const threshold = this.calculateEnergyThreshold(energyFrames);
-        const onsets: number[] = [];
+        // Calculate spectral flux (onset strength)
+        const onsetStrength = new Float32Array(numFrames);
+        for (let i = 1; i < numFrames; i++) {
+            const diff = energyFrames[i] - energyFrames[i - 1];
+            onsetStrength[i] = Math.max(0, diff); // Half-wave rectification
+        }
 
-        for (let i = 1; i < energyFrames.length; i++) {
-            const delta = energyFrames[i] - energyFrames[i - 1];
-            if (delta > threshold) {
-                onsets.push(i);
+        // Detect onsets using adaptive threshold
+        const threshold = this.calculateEnergyThreshold(onsetStrength);
+        const onsets: number[] = [];
+        const minOnsetSpacing = Math.floor((60.0 / 200.0) * sampleRate / hopSize); // Min 200 BPM
+
+        for (let i = minOnsetSpacing; i < onsetStrength.length - minOnsetSpacing; i++) {
+            if (onsetStrength[i] > threshold) {
+                // Check if local maximum
+                let isLocalMax = true;
+                for (let j = i - 2; j <= i + 2; j++) {
+                    if (j !== i && j >= 0 && j < onsetStrength.length && onsetStrength[j] >= onsetStrength[i]) {
+                        isLocalMax = false;
+                        break;
+                    }
+                }
+
+                if (isLocalMax && (onsets.length === 0 || i - onsets[onsets.length - 1] >= minOnsetSpacing)) {
+                    onsets.push(i);
+                }
             }
         }
 
-        if (onsets.length < 2) {
-            return 120;
+        if (onsets.length < 4) {
+            return 120.0;
         }
 
-        // Calculate average onset spacing
-        let totalSpacing = 0;
-        const maxOnsets = Math.min(10, onsets.length);
-
-        for (let i = 1; i < maxOnsets; i++) {
-            totalSpacing += onsets[i] - onsets[i - 1];
+        // Use autocorrelation on onset intervals to find tempo
+        const intervals: number[] = [];
+        for (let i = 1; i < onsets.length; i++) {
+            intervals.push(onsets[i] - onsets[i - 1]);
         }
 
-        const avgSpacing = Math.floor(totalSpacing / (maxOnsets - 1));
-        const onsetSampleSpacing = avgSpacing * hopSize;
+        // Find most common interval using histogram
+        const minInterval = Math.floor((60.0 / 180.0) * sampleRate / hopSize); // Max 180 BPM
+        const maxInterval = Math.floor((60.0 / 60.0) * sampleRate / hopSize);  // Min 60 BPM
+        const histogram = new Float32Array(maxInterval - minInterval + 1);
 
-        // Convert to BPM
-        let bpm = (60.0 * sampleRate) / onsetSampleSpacing;
+        for (const interval of intervals) {
+            if (interval >= minInterval && interval <= maxInterval) {
+                const idx = interval - minInterval;
+                histogram[idx] += 1;
+            }
+            // Also check half and double tempo
+            const halfInterval = Math.floor(interval / 2);
+            if (halfInterval >= minInterval && halfInterval <= maxInterval) {
+                const idx = halfInterval - minInterval;
+                histogram[idx] += 0.5;
+            }
+            const doubleInterval = interval * 2;
+            if (doubleInterval >= minInterval && doubleInterval <= maxInterval) {
+                const idx = doubleInterval - minInterval;
+                histogram[idx] += 0.5;
+            }
+        }
 
-        // Clamp and round
-        bpm = Math.max(80, Math.min(180, bpm));
-        bpm = Math.round((bpm / 2) * 2); // Round to nearest multiple of 2
+        // Find peak in histogram
+        let maxCount = 0;
+        let bestInterval = 0;
+        for (let i = 0; i < histogram.length; i++) {
+            if (histogram[i] > maxCount) {
+                maxCount = histogram[i];
+                bestInterval = i + minInterval;
+            }
+        }
 
-        return Math.floor(bpm);
+        if (bestInterval === 0) {
+            return 120.0;
+        }
+
+        // Convert to BPM with decimal precision
+        const intervalInSamples = bestInterval * hopSize;
+        let bpm = (60.0 * sampleRate) / intervalInSamples;
+
+        // Clamp to reasonable range but keep decimal precision
+        bpm = Math.max(60, Math.min(200, bpm));
+
+        // Round to one decimal place
+        return Math.round(bpm * 10) / 10;
     }
 
     /**
@@ -333,4 +406,98 @@ export class AudioAnalysisService {
         // Return mean + 1.5 * stdDev
         return mean + 1.5 * stdDev;
     }
+
+    /**
+     * Detect beat positions using onset detection
+     * Returns array of beat timestamps in seconds
+     */
+    private detectBeats(samples: Float32Array, sampleRate: number): number[] {
+        if (samples.length < sampleRate) {
+            return [];
+        }
+
+        // Calculate energy frames with onset detection
+        const frameSize = 2048;
+        const hopSize = frameSize / 2;
+        const numFrames = Math.floor((samples.length - frameSize) / hopSize);
+
+        if (numFrames < 2) {
+            return [];
+        }
+
+        const energyFrames = new Float32Array(numFrames);
+
+        // Calculate energy for each frame
+        for (let i = 0; i < numFrames; i++) {
+            const start = i * hopSize;
+            const end = start + frameSize;
+            let energy = 0;
+
+            for (let j = start; j < end && j < samples.length; j++) {
+                energy += samples[j] * samples[j];
+            }
+
+            energyFrames[i] = Math.sqrt(energy / frameSize);
+        }
+
+        // Calculate spectral flux (energy difference between frames)
+        const spectralFlux = new Float32Array(numFrames);
+        for (let i = 1; i < numFrames; i++) {
+            const diff = energyFrames[i] - energyFrames[i - 1];
+            spectralFlux[i] = Math.max(0, diff); // Only positive differences
+        }
+
+        // Find peaks in spectral flux (onset detection)
+        const beats: number[] = [];
+        const threshold = this.calculateAdaptiveThreshold(spectralFlux);
+        const minBeatInterval = Math.floor((60 / 200) * sampleRate / hopSize); // Min 200 BPM
+
+        for (let i = minBeatInterval; i < numFrames - minBeatInterval; i++) {
+            if (spectralFlux[i] > threshold) {
+                // Check if it's a local maximum
+                let isLocalMax = true;
+                for (let j = i - 2; j <= i + 2; j++) {
+                    if (j !== i && spectralFlux[j] >= spectralFlux[i]) {
+                        isLocalMax = false;
+                        break;
+                    }
+                }
+
+                if (isLocalMax) {
+                    // Check minimum beat interval
+                    if (beats.length === 0 || i - beats[beats.length - 1] >= minBeatInterval) {
+                        beats.push(i);
+                    }
+                }
+            }
+        }
+
+        // Convert frame indices to time in seconds
+        const beatTimes = beats.map(frameIdx => (frameIdx * hopSize) / sampleRate);
+
+        return beatTimes;
+    }
+
+    /**
+     * Calculate adaptive threshold for onset detection
+     */
+    private calculateAdaptiveThreshold(spectralFlux: Float32Array): number {
+        // Calculate mean and standard deviation
+        let sum = 0;
+        for (let i = 0; i < spectralFlux.length; i++) {
+            sum += spectralFlux[i];
+        }
+        const mean = sum / spectralFlux.length;
+
+        let varianceSum = 0;
+        for (let i = 0; i < spectralFlux.length; i++) {
+            const diff = spectralFlux[i] - mean;
+            varianceSum += diff * diff;
+        }
+        const stdDev = Math.sqrt(varianceSum / spectralFlux.length);
+
+        // Threshold is mean + 1.5 * standard deviation
+        return mean + 1.5 * stdDev;
+    }
 }
+

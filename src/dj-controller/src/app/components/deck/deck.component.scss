@@ -108,34 +108,18 @@
     height: 60px;
     position: relative;
     margin: $space-sm 0;
+    border-radius: $radius-sm;
+    overflow: hidden;
 }
 
-.waveform-container {
+.no-track-message {
     display: flex;
     align-items: center;
+    justify-content: center;
     height: 100%;
-    gap: 1px;
-    position: relative;
-}
-
-.waveform-bar {
-    flex: 1;
-    background: #00ff41;
-    opacity: 0.6;
-    border-radius: 1px;
-    min-height: 2px;
-    transition: height 0.1s ease;
-}
-
-.playhead {
-    position: absolute;
-    left: 50%;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: #ff6b35;
-    box-shadow: 0 0 10px #ff6b35;
-    z-index: 10;
+    font-size: $font-size-sm;
+    opacity: 0.5;
+    font-style: italic;
 }
 
 .lcd-footer {

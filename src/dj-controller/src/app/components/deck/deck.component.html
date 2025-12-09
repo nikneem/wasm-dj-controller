@@ -15,10 +15,11 @@
         </div>
 
         <div class="lcd-waveform">
-            <div class="waveform-container">
-                <div class="waveform-bar" *ngFor="let height of waveformBars; let i = index" [style.height.%]="height">
-                </div>
-                <div class="playhead"></div>
+            <app-beat-grid *ngIf="beatGrid.length > 0" [beatGrid]="beatGrid" [duration]="trackDuration"
+                [playbackPosition]="currentPlaybackPosition">
+            </app-beat-grid>
+            <div class="no-track-message" *ngIf="beatGrid.length === 0">
+                Drop audio file to load track
             </div>
         </div>
 
@@ -29,7 +30,7 @@
                 <span class="total-time">{{ duration }}</span>
             </div>
             <div class="track-meta">
-                <span class="bpm" *ngIf="bpm > 0">{{ bpm | number: '1.2-2' }} BPM</span>
+                <span class="bpm" *ngIf="bpm > 0">{{ bpm | number: '1.1-1' }} BPM</span>
                 <span class="key" *ngIf="key">{{ key }}</span>
             </div>
         </div>

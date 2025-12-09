@@ -5,96 +5,96 @@ This document describes the overall architecture of the WASM DJ Controller, incl
 ## System Architecture Diagram
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                          Browser Environment                        │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
+┌───────────────────────────────────────────────────────────────────┐
+│                          Browser Environment                      │
+├───────────────────────────────────────────────────────────────────┤
+│                                                                   │
 │  ┌─────────────────────────┐         ┌──────────────────────────┐ │
 │  │   Angular UI Layer      │         │   Web Workers            │ │
 │  │   (Main Thread)         │         │   (Background Thread)    │ │
 │  │                         │         │                          │ │
-│  │ ┌─────────────────────┐ │         │ ┌────────────────────┐  │ │
-│  │ │   Components        │ │         │ │ BPM Analyzer       │  │ │
-│  │ │ - Deck 1 / Deck 2   │ │         │ │ - Spectral Flux    │  │ │
-│  │ │ - Crossfader        │ │         │ │ - Onset Detection  │  │ │
-│  │ │ - Controls          │ │         │ │ - Tempo Estimation │  │ │
-│  │ │ - Waveform          │ │         │ └────────────────────┘  │ │
+│  │ ┌─────────────────────┐ │         │ ┌────────────────────┐   │ │
+│  │ │   Components        │ │         │ │ BPM Analyzer       │   │ │
+│  │ │ - Deck 1 / Deck 2   │ │         │ │ - Spectral Flux    │   │ │
+│  │ │ - Crossfader        │ │         │ │ - Onset Detection  │   │ │
+│  │ │ - Controls          │ │         │ │ - Tempo Estimation │   │ │
+│  │ │ - Waveform          │ │         │ └────────────────────┘   │ │
 │  │ └──────────┬──────────┘ │         │                          │ │
-│  │            │            │         │ ┌────────────────────┐  │ │
-│  │ ┌──────────▼──────────┐ │         │ │ Track Processor    │  │ │
-│  │ │ Services            │ │         │ │ - Key Detection    │  │ │
-│  │ │ - AudioService      │ │         │ │ - Analysis Cache   │  │ │
-│  │ │ - AudioWorkletSvc   │◄──────────┤ └────────────────────┘  │ │
+│  │            │            │         │ ┌────────────────────┐   │ │
+│  │ ┌──────────▼──────────┐ │         │ │ Track Processor    │   │ │
+│  │ │ Services            │ │         │ │ - Key Detection    │   │ │
+│  │ │ - AudioService      │ │         │ │ - Analysis Cache   │   │ │
+│  │ │ - AudioWorkletSvc   │◄──────────┤ └────────────────────┘   │ │
 │  │ │ - TrackLoaderSvc    │ │Message  │                          │ │
 │  │ │ - UISyncSvc         │ │Port     │                          │ │
 │  │ └─────────────────────┘ │         │                          │ │
 │  └─────────────────────────┘         └──────────────────────────┘ │
-│            │                                    ▲                  │
-│            │                                    │                  │
-│            │          MessagePort              │                  │
-│            └────────────────────────────────────┘                  │
-│                                                                    │
+│            │                                    ▲                 │
+│            │                                    │                 │
+│            │          MessagePort               │                 │
+│            └────────────────────────────────────┘                 │
+│                                                                   │
 │  ┌──────────────────────────────────────────────────────────────┐ │
 │  │            AudioWorklet (Dedicated Audio Thread)             │ │
-│  │                                                               │ │
+│  │                                                              │ │
 │  │  ┌────────────────────────────────────────────────────────┐  │ │
 │  │  │ AudioWorkletProcessor (Real-Time Audio Loop)           │  │ │
-│  │  │                                                         │  │ │
-│  │  │ ┌──────────────────────────────────────────────────┐  │  │ │
-│  │  │ │ process(inputs[], outputs[], params) {           │  │  │ │
-│  │  │ │   1. Fetch PCM from decoder buffer               │  │  │ │
-│  │  │ │   2. Call Wasm: phase_vocoder(pitch, tempo)      │  │  │ │
-│  │  │ │   3. Apply gain control                          │  │  │ │
-│  │  │ │   4. Mix deck 1 + deck 2 via crossfader          │  │  │ │
-│  │  │ │   5. Send to output (speakers)                   │  │  │ │
-│  │  │ │ }                                                 │  │  │ │
-│  │  │ └──────────────────────────────────────────────────┘  │  │ │
-│  │  │                                                         │  │ │
-│  │  │ Message Handler:                                        │  │ │
+│  │  │                                                        │  │ │
+│  │  │ ┌──────────────────────────────────────────────────┐   │  │ │
+│  │  │ │ process(inputs[], outputs[], params) {           │   │  │ │
+│  │  │ │   1. Fetch PCM from decoder buffer               │   │  │ │
+│  │  │ │   2. Call Wasm: phase_vocoder(pitch, tempo)      │   │  │ │
+│  │  │ │   3. Apply gain control                          │   │  │ │
+│  │  │ │   4. Mix deck 1 + deck 2 via crossfader          │   │  │ │
+│  │  │ │   5. Send to output (speakers)                   │   │  │ │
+│  │  │ │ }                                                │   │  │ │
+│  │  │ └──────────────────────────────────────────────────┘   │  │ │
+│  │  │                                                        │  │ │
+│  │  │ Message Handler:                                       │  │ │
 │  │  │ - volumeChange → adjust gain                           │  │ │
 │  │  │ - tempoChange → update phase vocoder param             │  │ │
 │  │  │ - pitchChange → update pitch-shift param               │  │ │
 │  │  │ - crossfaderMove → adjust mix ratio                    │  │ │
 │  │  └────────────────────────────────────────────────────────┘  │ │
-│  │                           ▲                                    │ │
-│  │                           │ Uses                               │ │
-│  │  ┌────────────────────────┴─────────────────────────────────┐ │ │
-│  │  │      WebAssembly Module (Phase Vocoder Engine)           │ │ │
-│  │  │                                                           │ │ │
-│  │  │  ┌────────────────────────────────────────────────────┐  │ │ │
+│  │                           ▲                                  │ │
+│  │                           │ Uses                             │ │
+│  │  ┌────────────────────────┴────────────────────────────────┐ │ │
+│  │  │      WebAssembly Module (Phase Vocoder Engine)          │ │ │
+│  │  │                                                         │ │ │
+│  │  │  ┌───────────────────────────────────────────────────┐  │ │ │
 │  │  │  │ process_frame(                                    │  │ │ │
 │  │  │  │   &input[],                                       │  │ │ │
-│  │  │  │   tempo_ratio: f32,                              │  │ │ │
-│  │  │  │   pitch_shift: i32,                              │  │ │ │
+│  │  │  │   tempo_ratio: f32,                               │  │ │ │
+│  │  │  │   pitch_shift: i32,                               │  │ │ │
 │  │  │  │ ) -> &output[]                                    │  │ │ │
-│  │  │  │                                                  │  │ │ │
-│  │  │  │  • FFT analysis                                  │  │ │ │
-│  │  │  │  • Phase vocoder algorithm                       │  │ │ │
-│  │  │  │  • Pitch-shift via bin rotation                  │  │ │ │
-│  │  │  │  • IFFT synthesis                                │  │ │ │
-│  │  │  └────────────────────────────────────────────────────┘  │ │ │
-│  │  │                                                           │ │ │
-│  │  │  Analysis Functions (Initial Track Processing):           │ │ │
-│  │  │  - analyze_bpm() → BPM value                             │ │ │
+│  │  │  │                                                   │  │ │ │
+│  │  │  │  • FFT analysis                                   │  │ │ │
+│  │  │  │  • Phase vocoder algorithm                        │  │ │ │
+│  │  │  │  • Pitch-shift via bin rotation                   │  │ │ │
+│  │  │  │  • IFFT synthesis                                 │  │ │ │
+│  │  │  └───────────────────────────────────────────────────┘  │ │ │
+│  │  │                                                         │ │ │
+│  │  │  Analysis Functions (Initial Track Processing):         │ │ │
+│  │  │  - analyze_bpm() → BPM value                            │ │ │
 │  │  │  - detect_key() → Key (C-B, major/minor)                │ │ │
-│  │  │  - extract_onsets() → beat grid                          │ │ │
-│  │  └───────────────────────────────────────────────────────────┘ │ │
+│  │  │  - extract_onsets() → beat grid                    ,    │ │ │
+│  │  └─────────────────────────────────────────────────────────┘ │ │
 │  └──────────────────────────────────────────────────────────────┘ │
-│                                                                    │
+│                                                                   │
 │  ┌──────────────────────────────────────────────────────────────┐ │
 │  │           Web Audio API (Audio Output)                       │ │
-│  │                                                               │ │
+│  │                                                              │ │
 │  │  AudioContext → [L+R PCM Data from Wasm]                     │ │
-│  │                    ↓                                          │ │
+│  │                    ↓                                         │ │
 │  │           GainNode (Volume)                                  │ │
-│  │                    ↓                                          │ │
+│  │                    ↓                                         │ │
 │  │           AnalyserNode (FFT for Visualization)               │ │
-│  │                    ↓                                          │ │
+│  │                    ↓                                         │ │
 │  │           Destination (Speakers)                             │ │
-│  │                                                               │ │
+│  │                                                              │ │
 │  └──────────────────────────────────────────────────────────────┘ │
-│                                                                    │
-└────────────────────────────────────────────────────────────────────┘
+│                                                                   │
+└───────────────────────────────────────────────────────────────────┘
 ```
 
 ## Component Details
