@@ -25,7 +25,8 @@
 .panel {
     display: flex;
     flex-direction: column;
-    overflow: auto;
+    min-height: 0; // Allow flex children to shrink
+    height: 100%; // Fill available height
 
     &.panel-left {
         // Orange accent for left deck

@@ -89,9 +89,8 @@
         <!-- Tempo Control (Right) -->
         <div class="tempo-control">
             <div class="tempo-mode-toggle">
-                <span class="mode-label" [class.active]="!isPitchMode">TEMPO</span>
+                <span class="mode-label">{{ isPitchMode ? 'PITCH' : 'TEMPO' }}</span>
                 <p-toggleSwitch [(ngModel)]="isPitchMode" [style]="{'width': '40px'}"></p-toggleSwitch>
-                <span class="mode-label" [class.active]="isPitchMode">PITCH</span>
             </div>
             <div class="tempo-display">{{ tempoPercent }}</div>
             <div class="tempo-slider-container">
@@ -105,10 +104,12 @@
                 </div>
             </div>
             <div class="tempo-range-toggle">
-                <span class="range-label" [class.active]="tempoRange === 8">±8%</span>
                 <p-toggleSwitch [(ngModel)]="isExtendedRange" (onChange)="onRangeToggle()"
                     [style]="{'width': '40px'}"></p-toggleSwitch>
-                <span class="range-label" [class.active]="tempoRange === 16">±16%</span>
+                <div class="range-labels">
+                    <span class="range-label" [class.active]="tempoRange === 8">±8%</span>
+                    <span class="range-label" [class.active]="tempoRange === 16">±16%</span>
+                </div>
             </div>
         </div>
     </div>

@@ -7,9 +7,11 @@
     padding: $space-lg;
     box-shadow: $shadow-xl;
     height: 100%;
+    min-height: 0; // Allow flex children to shrink properly
     display: flex;
     flex-direction: column;
     gap: $space-lg;
+    overflow: hidden; // Prevent any overflow causing scrollbars
 
     &.deck-left {
         border-color: rgba($primary-orange, 0.3);
@@ -211,8 +213,9 @@
     display: grid;
     grid-template-columns: 120px 1fr 100px;
     gap: $space-lg;
-    align-items: center;
+    flex: 1; // Stretch to fill available vertical space
     min-height: 300px;
+    position: relative;
 }
 
 // Transport Controls
@@ -220,6 +223,7 @@
     display: flex;
     flex-direction: column;
     gap: $space-md;
+    align-self: end; // Position at bottom of grid cell
 }
 
 .transport-btn {
@@ -342,7 +346,9 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center; // Center vertically in the available space
     gap: $space-md;
+    height: 100%; // Fill the height of grid cell
 }
 
 .jog-wheel {
@@ -419,11 +425,12 @@
     flex-direction: column;
     align-items: center;
     gap: $space-sm;
-    height: 100%;
+    height: 100%; // Fill the full height of the grid cell
 }
 
 .tempo-mode-toggle {
     display: flex;
+    flex-direction: column;
     align-items: center;
     gap: $space-xs;
     padding: $space-xs $space-sm;
@@ -435,20 +442,14 @@
 .mode-label {
     font-size: $font-size-xs;
     font-weight: $font-weight-bold;
-    color: $text-secondary;
+    color: $primary-orange;
     letter-spacing: 1.5px;
-    transition: all 0.3s ease;
-    opacity: 0.4;
-
-    &.active {
-        color: $primary-orange;
-        opacity: 1;
-        text-shadow: 0 0 8px rgba($primary-orange, 0.5);
-    }
+    text-shadow: 0 0 8px rgba($primary-orange, 0.5);
 }
 
 .tempo-range-toggle {
     display: flex;
+    flex-direction: column;
     align-items: center;
     gap: $space-xs;
     padding: $space-xs $space-sm;
@@ -456,6 +457,12 @@
     border: 1px solid $border-primary;
     border-radius: $radius-sm;
     margin-top: $space-xs;
+}
+
+.range-labels {
+    display: flex;
+    gap: $space-sm;
+    justify-content: center;
 }
 
 .range-label {
@@ -469,9 +476,9 @@
     text-align: center;
 
     &.active {
-        color: $secondary-green;
+        color: $primary-orange;
         opacity: 1;
-        text-shadow: 0 0 8px rgba($secondary-green, 0.5);
+        text-shadow: 0 0 8px rgba($primary-orange, 0.5);
     }
 }
 
