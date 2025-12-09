@@ -18,6 +18,7 @@ pub mod equalizer;
 pub mod fader;
 pub mod phase_vocoder;
 pub mod pitch_shifter;
+pub mod audio_analysis;
 
 use wasm_bindgen::prelude::*;
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -27,6 +28,7 @@ pub use equalizer::Equalizer;
 pub use fader::Fader;
 pub use phase_vocoder::PhaseVocoder;
 pub use pitch_shifter::PitchShifter;
+pub use audio_analysis::AudioAnalyzer;
 
 const VERSION: &str = "1.0.0";
 const MAX_FRAME_SIZE: usize = 4096;
@@ -383,4 +385,16 @@ mod tests {
         let output = processor.process_frame(&input_left, &input_right);
         assert_eq!(output.len(), 512); // 256 * 2 (stereo)
     }
+}
+
+/// WebAssembly interface for audio analysis functions
+#[wasm_bindgen]
+pub fn analyze_bpm(samples: &[f32], sample_rate: u32) -> u32 {
+    AudioAnalyzer::detect_bpm(samples, sample_rate)
+}
+
+/// WebAssembly interface for key detection
+#[wasm_bindgen]
+pub fn analyze_key(samples: &[f32], sample_rate: u32) -> String {
+    AudioAnalyzer::detect_key(samples, sample_rate)
 }

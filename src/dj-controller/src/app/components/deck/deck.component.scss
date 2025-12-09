@@ -274,6 +274,10 @@
             box-shadow: 0 0 20px $success, inset 0 0 10px rgba($success, 0.3);
             animation: led-glow-green 1.5s ease-in-out infinite;
         }
+
+        &.flashing {
+            animation: led-flash 1s steps(2, start) infinite;
+        }
     }
 }
 
@@ -298,6 +302,21 @@
 
     50% {
         box-shadow: 0 0 30px $success, inset 0 0 15px rgba($success, 0.5);
+    }
+}
+
+@keyframes led-flash {
+
+    0%,
+    49% {
+        border-color: $success;
+        box-shadow: 0 0 20px $success, inset 0 0 10px rgba($success, 0.3);
+    }
+
+    50%,
+    100% {
+        border-color: rgba($secondary-green, 0.3);
+        box-shadow: none;
     }
 }
 
@@ -480,7 +499,43 @@
 
 .deck-footer {
     display: flex;
+    flex-direction: column;
     justify-content: center;
+    align-items: center;
+    min-height: 100px;
+    padding: $space-md;
+    background: rgba(0, 0, 0, 0.2);
+    border: 2px dashed transparent;
+    border-radius: $radius-md;
+    transition: all $transition-fast;
+    position: relative;
+
+    &.locked {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    &.drag-over {
+        background: rgba($primary-orange, 0.1);
+        border-color: $primary-orange;
+        box-shadow: 0 0 20px rgba($primary-orange, 0.2);
+    }
+}
+
+.load-track-area {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-md;
+}
+
+.load-track-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-sm;
+    width: 100%;
 }
 
 .load-track-btn {
@@ -492,6 +547,130 @@
 
     &:hover {
         background: rgba($primary-orange, 0.1) !important;
+    }
+}
+
+.drag-hint {
+    font-size: $font-size-xs;
+    color: $text-tertiary;
+    margin: 0;
+    text-align: center;
+    font-style: italic;
+}
+
+.load-track-loaded {
+    display: flex;
+    align-items: center;
+    gap: $space-sm;
+    color: $success;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-sm;
+
+    i {
+        font-size: $font-size-md;
+    }
+
+    .track-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 200px;
+    }
+
+    .analyzing-indicator {
+        display: flex;
+        align-items: center;
+        gap: $space-sm;
+        animation: pulse 1s ease-in-out infinite;
+
+        i {
+            color: $primary-orange;
+        }
+    }
+
+    .loaded-content {
+        display: flex;
+        flex-direction: column;
+        gap: $space-xs;
+        align-items: flex-start;
+        width: 100%;
+    }
+
+    .analysis-results {
+        display: flex;
+        gap: $space-xs;
+        flex-wrap: wrap;
+    }
+
+    .analysis-badge {
+        background: rgba($success, 0.2);
+        color: $success;
+        padding: 2px $space-xs;
+        border-radius: $radius-sm;
+        font-size: $font-size-xs;
+        font-weight: $font-weight-bold;
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
+}
+
+.load-track-locked {
+    display: flex;
+    align-items: center;
+    gap: $space-sm;
+    color: $text-secondary;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-sm;
+    letter-spacing: 1px;
+
+    i {
+        font-size: $font-size-lg;
+    }
+}
+
+.load-track-error {
+    display: flex;
+    align-items: center;
+    gap: $space-sm;
+    color: $error;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-sm;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: fade-in-out 3s ease-in-out forwards;
+
+    i {
+        font-size: $font-size-md;
+    }
+}
+
+@keyframes fade-in-out {
+    0% {
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    90% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
     }
 }
 

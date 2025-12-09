@@ -58,8 +58,9 @@
                 <div class="led-rim led-orange" [class.lit]="isCued"></div>
                 <span class="btn-label">CUE</span>
             </button>
-            <button class="transport-btn play-btn" [class.active]="isPlaying" (click)="onPlayPause()">
-                <div class="led-rim led-green" [class.lit]="isPlaying"></div>
+            <button class="transport-btn play-btn" [class.active]="isPlaying" [class.paused]="isPaused"
+                (click)="onPlayPause()">
+                <div class="led-rim led-green" [class.lit]="isPlaying" [class.flashing]="isPaused"></div>
                 <i class="pi" [class.pi-play]="!isPlaying" [class.pi-pause]="isPlaying"></i>
             </button>
         </div>
@@ -96,10 +97,44 @@
         </div>
     </div>
 
-    <!-- Load Track Button -->
-    <div class="deck-footer">
-        <button pButton label="LOAD TRACK" icon="pi pi-folder-open" class="p-button-outlined load-track-btn"
-            (click)="onLoadTrack()">
-        </button>
+    <!-- Load Track Button / Drag Drop Area -->
+    <div class="deck-footer" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)"
+        [class.drag-over]="isDragOver" [class.locked]="isPlaying">
+
+        <!-- When playing: Show locked state -->
+        <div *ngIf="isPlaying" class="load-track-locked">
+            <i class="pi pi-lock"></i>
+            <span>LOCKED</span>
+        </div>
+
+        <!-- When not playing: Show load track area -->
+        <div *ngIf="!isPlaying" class="load-track-area">
+            <div *ngIf="!loadedFileName" class="load-track-empty">
+                <button pButton label="LOAD TRACK" icon="pi pi-folder-open" class="p-button-outlined load-track-btn"
+                    (click)="onLoadTrack()">
+                </button>
+                <p class="drag-hint">or drag an MP3 file here</p>
+            </div>
+            <div *ngIf="loadedFileName" class="load-track-loaded">
+                <div *ngIf="isAnalyzing" class="analyzing-indicator">
+                    <i class="pi pi-spin pi-spinner"></i>
+                    <span>Analyzing...</span>
+                </div>
+                <div *ngIf="!isAnalyzing" class="loaded-content">
+                    <i class="pi pi-check-circle"></i>
+                    <span class="track-name">{{ loadedFileName }}</span>
+                    <div *ngIf="bpm > 0" class="analysis-results">
+                        <span class="analysis-badge">{{ bpm }} BPM</span>
+                        <span class="analysis-badge">{{ key }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error message -->
+        <div *ngIf="dragError" class="load-track-error">
+            <i class="pi pi-exclamation-circle"></i>
+            <span>{{ dragError }}</span>
+        </div>
     </div>
 </div>

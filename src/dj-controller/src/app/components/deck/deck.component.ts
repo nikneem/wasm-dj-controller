@@ -1,8 +1,9 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { SliderModule } from 'primeng/slider';
+import { AudioAnalysisService } from '../../services/audio-analysis.service';
 
 @Component({
     selector: 'app-deck',
@@ -11,7 +12,7 @@ import { SliderModule } from 'primeng/slider';
     templateUrl: './deck.component.html',
     styleUrls: ['./deck.component.scss']
 })
-export class DeckComponent {
+export class DeckComponent implements OnInit {
     @Input() deckSide: 'left' | 'right' = 'left';
     @Input() deckNumber: number = 1;
 
@@ -25,7 +26,9 @@ export class DeckComponent {
 
     // Control states
     isPlaying: boolean = false;
+    isPaused: boolean = false; // Track paused state separately
     isCued: boolean = false;
+    cuePoint: number = 0; // Store cue point in seconds
     isLooping: boolean = false;
     loopStart: number | null = null;
     loopEnd: number | null = null;
@@ -41,19 +44,44 @@ export class DeckComponent {
     // Waveform data (mock)
     waveformBars: number[] = Array.from({ length: 80 }, () => Math.random() * 100);
 
-    constructor() { }
+    // File loading
+    isDragOver: boolean = false;
+    dragError: string = '';
+    loadedFileName: string = '';
+    isAnalyzing: boolean = false;
+
+    constructor(private audioAnalysisService: AudioAnalysisService) { }
+
+    ngOnInit(): void {
+        // Initialize component
+    }
 
     onPlayPause(): void {
-        this.isPlaying = !this.isPlaying;
+        if (this.isPlaying) {
+            // If playing, pause and start flashing
+            this.isPlaying = false;
+            this.isPaused = true;
+        } else if (this.isPaused) {
+            // If paused (after play), resume playing
+            this.isPaused = false;
+            this.isPlaying = true;
+        } else {
+            // If stopped, start playing
+            this.isPlaying = true;
+        }
     }
 
     onCue(): void {
         if (this.isPlaying) {
+            // If track is playing, jump to cue point and stop
             this.isPlaying = false;
+            this.isPaused = false;
             this.isCued = true;
-            // Return to cue point
+            // In real implementation, would seek to this.cuePoint
         } else {
-            this.isCued = !this.isCued;
+            // If paused or stopped, remember current position as cue point
+            this.cuePoint = this.parseTimeToSeconds(this.currentTime);
+            this.isCued = true;
         }
     }
 
@@ -102,6 +130,90 @@ export class DeckComponent {
 
     onLoadTrack(): void {
         // Trigger file input or show track browser
+        if (this.isPlaying) {
+            this.dragError = 'Cannot load track, deck is playing';
+            return;
+        }
         console.log('Load track for deck', this.deckNumber);
+    }
+
+    onDragOver(event: DragEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!this.isPlaying) {
+            this.isDragOver = true;
+        }
+    }
+
+    onDragLeave(event: DragEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        this.isDragOver = false;
+    }
+
+    onDrop(event: DragEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        this.isDragOver = false;
+        this.dragError = '';
+
+        // If playing, show error message
+        if (this.isPlaying) {
+            this.dragError = 'Cannot load track, deck is playing';
+            return;
+        }
+
+        // Get dropped files
+        const files = event.dataTransfer?.files;
+        if (!files || files.length === 0) {
+            this.dragError = 'No files dropped';
+            return;
+        }
+
+        const file = files[0];
+
+        // Check if it's an MP3 file
+        if (!file.type.includes('audio') && !file.name.toLowerCase().endsWith('.mp3')) {
+            this.dragError = 'Only MP3 files are supported';
+            return;
+        }
+
+        // Load the track
+        this.loadedFileName = file.name;
+        this.dragError = '';
+        this.trackTitle = file.name.replace('.mp3', '').replace(/\.[^.]*$/, '');
+
+        // Analyze the file
+        this.analyzeAudioFile(file);
+
+        console.log('Track loaded:', file.name);
+    }
+
+    private async analyzeAudioFile(file: File): Promise<void> {
+        this.isAnalyzing = true;
+
+        try {
+            // Analyze BPM and Key in parallel
+            const [detectedBPM, detectedKey] = await Promise.all([
+                this.audioAnalysisService.analyzeBPM(file),
+                this.audioAnalysisService.analyzeKey(file)
+            ]);
+
+            // Update UI with detected values
+            this.bpm = detectedBPM;
+            this.key = detectedKey;
+
+            console.log(`Track Analysis - BPM: ${detectedBPM}, Key: ${detectedKey}`);
+        } catch (error) {
+            console.error('Error analyzing audio file:', error);
+            this.dragError = 'Failed to analyze audio file';
+        } finally {
+            this.isAnalyzing = false;
+        }
+    } private parseTimeToSeconds(timeStr: string): number {
+        const parts = timeStr.split(':');
+        const minutes = parseInt(parts[0], 10) || 0;
+        const seconds = parseInt(parts[1], 10) || 0;
+        return minutes * 60 + seconds;
     }
 }
