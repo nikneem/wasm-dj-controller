@@ -22,6 +22,7 @@ export class DeckComponent implements OnInit, OnDestroy {
     trackTitle: string = 'No Track Loaded';
     artist: string = '';
     bpm: number = 0;
+    originalBPM: number = 0; // Store original BPM for tempo calculations
     key: string = '';
     duration: string = '00:00';
     currentTime: string = '00:00';
@@ -156,6 +157,17 @@ export class DeckComponent implements OnInit, OnDestroy {
         this.tempoPercent = value > 0
             ? `+${value.toFixed(2)}%`
             : `${value.toFixed(2)}%`;
+
+        // Apply tempo to audio service
+        this.audioPlaybackService.setTempoPercent(value);
+
+        // Update BPM based on tempo (with decimal precision)
+        if (this.originalBPM > 0) {
+            const tempoMultiplier = 1.0 + (value / 100);
+            this.bpm = this.originalBPM * tempoMultiplier;
+        }
+
+        console.log('[Deck] Tempo changed to:', value, '% - BPM now:', this.bpm);
     }
 
     onJogMouseDown(): void {
@@ -244,6 +256,19 @@ export class DeckComponent implements OnInit, OnDestroy {
             // Load track for playback service first
             await this.audioPlaybackService.loadTrack(file);
 
+            // Reset playback state
+            this.isPlaying = false;
+            this.isPaused = false;
+
+            // Reset cue point
+            this.cuePoint = 0;
+            this.isCued = false;
+
+            // Reset tempo to 0%
+            this.tempoValue = 0;
+            this.tempoPercent = '0.00%';
+            this.audioPlaybackService.setTempoPercent(0);
+
             // Set duration from loaded track
             const trackDuration = this.audioPlaybackService.getDuration();
             this.duration = this.formatTime(trackDuration);
@@ -255,7 +280,8 @@ export class DeckComponent implements OnInit, OnDestroy {
             ]);
 
             // Update UI with detected values
-            this.bpm = detectedBPM;
+            this.originalBPM = detectedBPM; // Store original BPM
+            this.bpm = detectedBPM; // Display original BPM initially
             this.key = detectedKey;
 
             console.log(`Track Analysis - BPM: ${detectedBPM}, Key: ${detectedKey}, Duration: ${this.duration}`);

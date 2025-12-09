@@ -29,7 +29,7 @@
                 <span class="total-time">{{ duration }}</span>
             </div>
             <div class="track-meta">
-                <span class="bpm" *ngIf="bpm > 0">{{ bpm }} BPM</span>
+                <span class="bpm" *ngIf="bpm > 0">{{ bpm | number: '1.2-2' }} BPM</span>
                 <span class="key" *ngIf="key">{{ key }}</span>
             </div>
         </div>
@@ -124,7 +124,7 @@
                     <i class="pi pi-check-circle"></i>
                     <span class="track-name">{{ loadedFileName }}</span>
                     <div *ngIf="bpm > 0" class="analysis-results">
-                        <span class="analysis-badge">{{ bpm }} BPM</span>
+                        <span class="analysis-badge">{{ bpm | number: '1.2-2' }} BPM</span>
                         <span class="analysis-badge">{{ key }}</span>
                     </div>
                 </div>

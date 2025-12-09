@@ -17,6 +17,7 @@ export class AudioPlaybackService {
     private pauseTime: number = 0;
     private isPlayingFlag: boolean = false;
     private currentPlaybackPosition: number = 0; // Track position explicitly
+    private playbackRate: number = 1.0; // Tempo/playback rate (1.0 = normal speed)
 
     // Observable for playback time updates
     private playbackTimeSubject = new Subject<number>();
@@ -103,31 +104,42 @@ export class AudioPlaybackService {
         let startPosition: number;
         if (fromTime !== undefined) {
             startPosition = fromTime;
+            console.log('[AudioPlayback] play() called with explicit fromTime:', fromTime);
         } else {
             // Resume from stored position
-            startPosition = this.currentPlaybackPosition;
+            // Use currentPlaybackPosition, or fallback to pauseTime if current is 0
+            startPosition = this.currentPlaybackPosition || this.pauseTime;
+            console.log('[AudioPlayback] play() called without params, currentPlaybackPosition is:', this.currentPlaybackPosition, ', pauseTime is:', this.pauseTime, ', using startPosition:', startPosition);
         }
 
-        console.log('[AudioPlayback] play() - startPosition:', startPosition, 'currentPlaybackPosition:', this.currentPlaybackPosition, 'pauseTime:', this.pauseTime);
+        console.log('[AudioPlayback] play() BEGINNING - startPosition:', startPosition, 'currentPlaybackPosition:', this.currentPlaybackPosition, 'pauseTime:', this.pauseTime, 'playbackRate:', this.playbackRate);
 
         // Create new source node
         this.sourceNode = this.audioContext.createBufferSource();
         this.sourceNode.buffer = this.audioBuffer;
         this.sourceNode.connect(this.gainNode);
 
+        // Apply playback rate (tempo)
+        this.sourceNode.playbackRate.value = this.playbackRate;
+
         // Calculate startTime for accurate position tracking
-        this.startTime = this.audioContext.currentTime - startPosition;
+        // We need: getCurrentTime() = (audioContext.currentTime - startTime) * playbackRate = startPosition
+        // So: startTime = audioContext.currentTime - (startPosition / playbackRate)
+        this.startTime = this.audioContext.currentTime - (startPosition / this.playbackRate);
         this.isPlayingFlag = true;
 
         // Start playback from the calculated position
         this.sourceNode.start(0, startPosition);
-        console.log('[AudioPlayback] Playback started from:', startPosition, 'seconds, audioContext.currentTime:', this.audioContext.currentTime);
+        console.log('[AudioPlayback] Playback started from:', startPosition, 'seconds, startTime calc:', this.startTime, 'audioContext.currentTime:', this.audioContext.currentTime, 'playbackRate:', this.playbackRate);
 
         // Handle end of track
         this.sourceNode.onended = () => {
-            this.isPlayingFlag = false;
-            this.currentPlaybackPosition = 0;
-            this.playbackEndedSubject.next();
+            // Only reset if we're not in the middle of a pause/play cycle
+            if (this.isPlayingFlag) {
+                this.isPlayingFlag = false;
+                this.currentPlaybackPosition = 0;
+                this.playbackEndedSubject.next();
+            }
         };
     }
 
@@ -141,11 +153,17 @@ export class AudioPlaybackService {
         }
 
         // Calculate and store the exact pause position
-        const currentTime = this.audioContext!.currentTime - this.startTime;
-        this.currentPlaybackPosition = Math.max(0, Math.min(currentTime, this.audioBuffer!.duration));
+        // During playback: currentTime = (audioContext.currentTime - startTime) * playbackRate
+        const elapsedTime = this.audioContext!.currentTime - this.startTime;
+        const audioPosition = elapsedTime * this.playbackRate;
+        const newPosition = Math.max(0, Math.min(audioPosition, this.audioBuffer!.duration));
+
+        console.log('[AudioPlayback] pause() BEFORE - currentPlaybackPosition:', this.currentPlaybackPosition);
+
+        this.currentPlaybackPosition = newPosition;
         this.pauseTime = this.currentPlaybackPosition; // Keep pauseTime in sync
 
-        console.log('[AudioPlayback] pause() - currentPlaybackPosition set to:', this.currentPlaybackPosition, 'calculated currentTime was:', currentTime);
+        console.log('[AudioPlayback] pause() AFTER - currentPlaybackPosition set to:', this.currentPlaybackPosition, 'pauseTime:', this.pauseTime, 'elapsedTime was:', elapsedTime, 'audioPosition was:', audioPosition, 'playbackRate:', this.playbackRate, 'startTime:', this.startTime, 'audioContext.currentTime:', this.audioContext!.currentTime);
 
         // Stop source
         try {
@@ -158,6 +176,8 @@ export class AudioPlaybackService {
 
         // Emit the paused time to update UI
         this.playbackTimeSubject.next(this.currentPlaybackPosition);
+
+        console.log('[AudioPlayback] pause() FINAL - currentPlaybackPosition:', this.currentPlaybackPosition);
     }
 
     /**
@@ -210,7 +230,9 @@ export class AudioPlaybackService {
         }
 
         // When playing, calculate position dynamically
-        const calculatedTime = this.audioContext.currentTime - this.startTime;
+        // Position in audio = (audioContext.currentTime - startTime) * playbackRate
+        const elapsedTime = this.audioContext.currentTime - this.startTime;
+        const calculatedTime = elapsedTime * this.playbackRate;
         const clampedTime = Math.max(0, Math.min(calculatedTime, this.audioBuffer?.duration || 0));
         return clampedTime;
     }
@@ -243,6 +265,49 @@ export class AudioPlaybackService {
      */
     getVolume(): number {
         return this.gainNode?.gain.value || 0.8;
+    }
+
+    /**
+     * Set playback rate/tempo
+     * @param rate - Playback rate (0.5 = half speed, 1.0 = normal, 2.0 = double speed)
+     */
+    setPlaybackRate(rate: number): void {
+        // Clamp rate between 0.5 and 2.0 (typical DJ controller range)
+        this.playbackRate = Math.max(0.5, Math.min(2.0, rate));
+
+        // Apply to currently playing source
+        if (this.sourceNode && this.isPlayingFlag) {
+            this.sourceNode.playbackRate.value = this.playbackRate;
+        }
+
+        console.log('[AudioPlayback] Playback rate set to:', this.playbackRate);
+    }
+
+    /**
+     * Get current playback rate
+     */
+    getPlaybackRate(): number {
+        return this.playbackRate;
+    }
+
+    /**
+     * Convert tempo percentage to playback rate
+     * Tempo range: -8 to +8 (in percentage)
+     * Conversion: playbackRate = 1.0 + (tempoPercent / 100)
+     * @param tempoPercent - Tempo percentage (-8 to +8)
+     */
+    setTempoPercent(tempoPercent: number): void {
+        // Clamp to -8 to +8 range
+        const clamped = Math.max(-8, Math.min(8, tempoPercent));
+        const playbackRate = 1.0 + (clamped / 100);
+        this.setPlaybackRate(playbackRate);
+    }
+
+    /**
+     * Get tempo as percentage
+     */
+    getTempoPercent(): number {
+        return (this.playbackRate - 1.0) * 100;
     }
 
     private readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
