@@ -4,10 +4,9 @@ import { Subject } from 'rxjs';
 /**
  * Audio playback service for controlling deck audio
  * Manages AudioContext, audio buffers, and playback state
+ * NOTE: Not provided at root - each DeckComponent gets its own instance
  */
-@Injectable({
-    providedIn: 'root'
-})
+@Injectable()
 export class AudioPlaybackService {
     private audioContext: AudioContext | null = null;
     private audioBuffer: AudioBuffer | null = null;

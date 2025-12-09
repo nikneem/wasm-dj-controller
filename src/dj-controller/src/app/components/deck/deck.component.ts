@@ -12,7 +12,8 @@ import { Subscription } from 'rxjs';
     standalone: true,
     imports: [CommonModule, ButtonModule, SliderModule, FormsModule],
     templateUrl: './deck.component.html',
-    styleUrls: ['./deck.component.scss']
+    styleUrls: ['./deck.component.scss'],
+    providers: [AudioPlaybackService] // Provide a separate instance for each deck
 })
 export class DeckComponent implements OnInit, OnDestroy {
     @Input() deckSide: 'left' | 'right' = 'left';
