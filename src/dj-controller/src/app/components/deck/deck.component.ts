@@ -40,8 +40,11 @@ export class DeckComponent implements OnInit, OnDestroy {
     loopEnd: number | null = null;
 
     // Tempo control
-    tempoValue: number = 0; // -8 to +8 range
+    tempoValue: number = 0; // Dynamic range based on tempoRange
     tempoPercent: string = '0.00%';
+    isPitchMode: boolean = false; // Toggle between tempo (key lock) and pitch (speed change) modes
+    isExtendedRange: boolean = false; // Toggle between ±8% and ±16% range
+    tempoRange: number = 8; // Current tempo range (8 or 16)
 
     // Jog wheel
     jogRotation: number = 0;
@@ -172,6 +175,10 @@ export class DeckComponent implements OnInit, OnDestroy {
             : `${value.toFixed(2)}%`;
 
         // Apply tempo to audio service
+        // In pitch mode, changing playback rate affects both speed and pitch
+        // In tempo mode (key lock), only tempo changes while maintaining key/pitch
+        // Note: Currently both modes use playback rate. Future enhancement would use
+        // a pitch shifter/time stretcher for true tempo-only adjustment
         this.audioPlaybackService.setTempoPercent(value);
 
         // Update BPM based on tempo (with decimal precision)
@@ -180,7 +187,21 @@ export class DeckComponent implements OnInit, OnDestroy {
             this.bpm = this.originalBPM * tempoMultiplier;
         }
 
-        console.log('[Deck] Tempo changed to:', value, '% - BPM now:', this.bpm);
+        const mode = this.isPitchMode ? 'PITCH (speed+tone)' : 'TEMPO (key lock)';
+        console.log('[Deck] Tempo changed to:', value, '% - Mode:', mode, '- Range: ±' + this.tempoRange + '% - BPM now:', this.bpm);
+    }
+
+    onRangeToggle(): void {
+        // Switch between ±8% and ±16% range
+        this.tempoRange = this.isExtendedRange ? 16 : 8;
+
+        // Clamp current tempo value to new range if it exceeds it
+        if (Math.abs(this.tempoValue) > this.tempoRange) {
+            this.tempoValue = Math.sign(this.tempoValue) * this.tempoRange;
+            this.onTempoChange(this.tempoValue);
+        }
+
+        console.log('[Deck] Tempo range changed to: ±' + this.tempoRange + '%');
     }
 
     onJogMouseDown(event: MouseEvent): void {
