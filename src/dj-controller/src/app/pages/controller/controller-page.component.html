@@ -1,67 +1,23 @@
 <div class="controller-page">
     <!-- 3-Panel Layout: Left Deck | Center Mixer | Right Deck -->
     <div class="controller-layout">
-        <!-- Left Deck Panel (40%) -->
+        <!-- Left Deck Panel (35%) -->
         <div class="panel panel-left">
-            <app-deck [deckNumber]="leftDeck.number" [deckSide]="leftDeck.side"></app-deck>
+            <app-deck #leftDeckComponent [deckNumber]="leftDeck.number" [deckSide]="leftDeck.side"></app-deck>
         </div>
 
-        <!-- Center Mixer Panel (20%) -->
+        <!-- Center Mixer Panel (30%) -->
         <div class="panel panel-center">
-            <div class="mixer-section">
-                <h2 class="mixer-title">MIXER</h2>
-
-                <!-- Master Controls -->
-                <div class="control-group">
-                    <label class="control-label">Master Volume</label>
-                    <div class="volume-display">0 dB</div>
-                    <input type="range" min="-60" max="0" [(ngModel)]="masterVolume"
-                        class="mixer-slider vertical-slider" title="Master output volume">
-                </div>
-
-                <!-- Crossfader -->
-                <div class="control-group">
-                    <label class="control-label">Crossfader</label>
-                    <div class="crossfader-display">
-                        <span class="crossfader-left">L</span>
-                        <span class="crossfader-center" [class.active]="crossfaderPosition === 0">C</span>
-                        <span class="crossfader-right">R</span>
-                    </div>
-                    <input type="range" min="-100" max="100" [(ngModel)]="crossfaderPosition" class="mixer-slider"
-                        title="Crossfade between decks">
-                    <div class="slider-scale">
-                        <span>LEFT</span>
-                        <span>CENTER</span>
-                        <span>RIGHT</span>
-                    </div>
-                </div>
-
-                <!-- Upcoming Track Info -->
-                <div class="control-group">
-                    <label class="control-label">Upcoming BPM</label>
-                    <div class="bpm-input">
-                        <input type="number" [(ngModel)]="upcomingBPM" min="80" max="180" placeholder="BPM"
-                            class="bpm-field">
-                    </div>
-                </div>
-
-                <!-- Status Section -->
-                <div class="status-group">
-                    <div class="status-item" [class.connected]="isConnected">
-                        <span class="status-indicator"></span>
-                        <span class="status-text">{{ isConnected ? 'Connected' : 'Disconnected' }}</span>
-                    </div>
-                    <div class="status-item">
-                        <i class="pi pi-microchip" style="font-size: 0.875rem;"></i>
-                        <span class="status-text">WASM Engine</span>
-                    </div>
-                </div>
-            </div>
+            <app-mixer [leftDeckSettings]="leftChannelSettings" [rightDeckSettings]="rightChannelSettings"
+                [masterVolume]="masterVolume" [crossFader]="crossFader" (leftDeckChange)="onLeftChannelChange($event)"
+                (rightDeckChange)="onRightChannelChange($event)" (masterVolumeChange)="onMasterVolumeChange($event)"
+                (crossFaderChange)="onCrossFaderChange($event)">
+            </app-mixer>
         </div>
 
-        <!-- Right Deck Panel (40%) -->
+        <!-- Right Deck Panel (35%) -->
         <div class="panel panel-right">
-            <app-deck [deckNumber]="rightDeck.number" [deckSide]="rightDeck.side"></app-deck>
+            <app-deck #rightDeckComponent [deckNumber]="rightDeck.number" [deckSide]="rightDeck.side"></app-deck>
         </div>
     </div>
 </div>

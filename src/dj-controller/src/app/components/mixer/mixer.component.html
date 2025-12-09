@@ -1,0 +1,112 @@
+<div class="mixer-container">
+    <!-- Left Deck Channel -->
+    <div class="channel-strip">
+        <div class="channel-header">DECK 1</div>
+
+        <div class="knobs-section">
+            <!-- Gain -->
+            <app-knob label="GAIN" [value]="leftDeckSettings.gain" [min]="-255" [max]="255"
+                (valueChange)="onLeftGainChange($event)">
+            </app-knob>
+
+            <!-- High EQ -->
+            <app-knob label="HIGH" [value]="leftDeckSettings.highEq" [min]="-255" [max]="255"
+                (valueChange)="onLeftHighEqChange($event)">
+            </app-knob>
+
+            <!-- Mid EQ -->
+            <app-knob label="MID" [value]="leftDeckSettings.midEq" [min]="-255" [max]="255"
+                (valueChange)="onLeftMidEqChange($event)">
+            </app-knob>
+
+            <!-- Low EQ -->
+            <app-knob label="LOW" [value]="leftDeckSettings.lowEq" [min]="-255" [max]="255"
+                (valueChange)="onLeftLowEqChange($event)">
+            </app-knob>
+
+            <!-- Fader -->
+            <app-knob label="PAN" [value]="leftDeckSettings.fader" [min]="-255" [max]="255"
+                (valueChange)="onLeftFaderChange($event)">
+            </app-knob>
+        </div>
+
+        <!-- Volume Slider -->
+        <div class="volume-slider-container">
+            <div class="volume-label">VOL</div>
+            <p-slider [(ngModel)]="leftDeckSettings.volume" [min]="0" [max]="100" [step]="1" orientation="vertical"
+                (onChange)="onLeftVolumeChange(leftDeckSettings.volume)" class="channel-volume-slider">
+            </p-slider>
+            <div class="volume-value">{{ leftDeckSettings.volume }}</div>
+        </div>
+    </div>
+
+    <!-- Master Section -->
+    <div class="master-section">
+        <div class="master-header">MASTER</div>
+
+        <!-- Master Volume Slider -->
+        <div class="master-volume-container">
+            <div class="master-label">MASTER</div>
+            <p-slider [(ngModel)]="masterVolume" [min]="0" [max]="100" [step]="1" orientation="vertical"
+                (onChange)="onMasterVolumeChange(masterVolume)" class="master-volume-slider">
+            </p-slider>
+            <div class="master-value">{{ masterVolume }}</div>
+        </div>
+
+        <!-- Cross Fader -->
+        <div class="crossfader-container">
+            <div class="crossfader-label">CROSS FADER</div>
+            <div class="crossfader-markers">
+                <span class="marker">L</span>
+                <span class="marker center">•</span>
+                <span class="marker">R</span>
+            </div>
+            <p-slider [(ngModel)]="crossFader" [min]="-100" [max]="100" [step]="1" orientation="horizontal"
+                (onChange)="onCrossFaderChange(crossFader)" class="crossfader-slider">
+            </p-slider>
+            <div class="crossfader-value">{{ crossFader > 0 ? 'R ' + crossFader : crossFader < 0 ? 'L ' +
+                    getCrossFaderAbs(crossFader) : 'CENTER' }}</div>
+            </div>
+        </div>
+
+        <!-- Right Deck Channel -->
+        <div class="channel-strip">
+            <div class="channel-header">DECK 2</div>
+
+            <div class="knobs-section">
+                <!-- Gain -->
+                <app-knob label="GAIN" [value]="rightDeckSettings.gain" [min]="-255" [max]="255"
+                    (valueChange)="onRightGainChange($event)">
+                </app-knob>
+
+                <!-- High EQ -->
+                <app-knob label="HIGH" [value]="rightDeckSettings.highEq" [min]="-255" [max]="255"
+                    (valueChange)="onRightHighEqChange($event)">
+                </app-knob>
+
+                <!-- Mid EQ -->
+                <app-knob label="MID" [value]="rightDeckSettings.midEq" [min]="-255" [max]="255"
+                    (valueChange)="onRightMidEqChange($event)">
+                </app-knob>
+
+                <!-- Low EQ -->
+                <app-knob label="LOW" [value]="rightDeckSettings.lowEq" [min]="-255" [max]="255"
+                    (valueChange)="onRightLowEqChange($event)">
+                </app-knob>
+
+                <!-- Fader -->
+                <app-knob label="PAN" [value]="rightDeckSettings.fader" [min]="-255" [max]="255"
+                    (valueChange)="onRightFaderChange($event)">
+                </app-knob>
+            </div>
+
+            <!-- Volume Slider -->
+            <div class="volume-slider-container">
+                <div class="volume-label">VOL</div>
+                <p-slider [(ngModel)]="rightDeckSettings.volume" [min]="0" [max]="100" [step]="1" orientation="vertical"
+                    (onChange)="onRightVolumeChange(rightDeckSettings.volume)" class="channel-volume-slider">
+                </p-slider>
+                <div class="volume-value">{{ rightDeckSettings.volume }}</div>
+            </div>
+        </div>
+    </div>

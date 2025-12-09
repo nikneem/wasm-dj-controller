@@ -1,0 +1,241 @@
+@use '../../../styles/variables' as *;
+
+.mixer-container {
+    display: flex;
+    gap: $space-xl;
+    padding: $space-lg;
+    background: linear-gradient(135deg, $bg-tertiary 0%, $bg-secondary 100%);
+    border: 2px solid $border-primary;
+    border-radius: $radius-lg;
+    box-shadow: $shadow-xl;
+    min-height: 500px;
+}
+
+.channel-strip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-lg;
+    padding: $space-lg;
+    background: $bg-darker;
+    border: 1px solid $border-primary;
+    border-radius: $radius-md;
+    min-width: 120px;
+}
+
+.channel-header {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-bold;
+    color: $primary-orange;
+    letter-spacing: 2px;
+    padding: $space-xs $space-md;
+    background: $bg-elevated;
+    border: 1px solid $border-primary;
+    border-radius: $radius-sm;
+}
+
+.knobs-section {
+    display: flex;
+    flex-direction: column;
+    gap: $space-lg;
+    padding: $space-md 0;
+}
+
+.volume-slider-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-sm;
+    flex: 1;
+    min-height: 200px;
+}
+
+.volume-label {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-bold;
+    color: $text-secondary;
+    letter-spacing: 1.5px;
+}
+
+::ng-deep .channel-volume-slider {
+    flex: 1;
+    min-height: 150px;
+
+    .p-slider {
+        background: $bg-darker !important;
+        border: 2px solid $border-primary !important;
+        width: 30px !important;
+    }
+
+    .p-slider-range {
+        background: linear-gradient(to top, $primary-orange, lighten($primary-orange, 10%)) !important;
+    }
+
+    .p-slider-handle {
+        width: 40px !important;
+        height: 20px !important;
+        border-radius: $radius-sm !important;
+        background: linear-gradient(to bottom, $bg-elevated, $bg-secondary) !important;
+        border: 2px solid $primary-orange !important;
+        box-shadow: 0 2px 8px rgba($primary-orange, 0.4) !important;
+    }
+}
+
+.volume-value {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-bold;
+    color: $primary-orange;
+    font-family: 'Courier New', monospace;
+    padding: $space-xs $space-sm;
+    background: $bg-darker;
+    border: 1px solid $border-primary;
+    border-radius: $radius-sm;
+    min-width: 50px;
+    text-align: center;
+}
+
+// Master Section
+.master-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-lg;
+    padding: $space-lg;
+    background: linear-gradient(135deg, $bg-elevated 0%, $bg-darker 100%);
+    border: 2px solid $primary-orange;
+    border-radius: $radius-md;
+    min-width: 180px;
+}
+
+.master-header {
+    font-size: $font-size-md;
+    font-weight: $font-weight-bold;
+    color: $primary-orange;
+    letter-spacing: 3px;
+    text-shadow: 0 0 10px rgba($primary-orange, 0.5);
+}
+
+.master-volume-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-md;
+    flex: 1;
+    min-height: 200px;
+}
+
+.master-label {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-bold;
+    color: $text-secondary;
+    letter-spacing: 2px;
+}
+
+::ng-deep .master-volume-slider {
+    flex: 1;
+    min-height: 180px;
+
+    .p-slider {
+        background: linear-gradient(to bottom, $bg-tertiary, $bg-darker) !important;
+        border: 3px solid $primary-orange !important;
+        width: 40px !important;
+        box-shadow: 0 0 15px rgba($primary-orange, 0.3);
+    }
+
+    .p-slider-range {
+        background: linear-gradient(to top, $primary-orange, lighten($primary-orange, 20%)) !important;
+        box-shadow: 0 0 10px rgba($primary-orange, 0.5);
+    }
+
+    .p-slider-handle {
+        width: 50px !important;
+        height: 25px !important;
+        border-radius: $radius-md !important;
+        background: linear-gradient(to bottom, lighten($primary-orange, 20%), $primary-orange) !important;
+        border: 3px solid lighten($primary-orange, 30%) !important;
+        box-shadow: 0 4px 12px rgba($primary-orange, 0.6) !important;
+    }
+}
+
+.master-value {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-bold;
+    color: $primary-orange;
+    font-family: 'Courier New', monospace;
+    padding: $space-sm $space-md;
+    background: $bg-darker;
+    border: 2px solid $primary-orange;
+    border-radius: $radius-md;
+    min-width: 70px;
+    text-align: center;
+    box-shadow: 0 0 10px rgba($primary-orange, 0.3);
+}
+
+// Cross Fader
+.crossfader-container {
+    display: flex;
+    flex-direction: column;
+    gap: $space-sm;
+    width: 100%;
+    padding: $space-md;
+    background: $bg-darker;
+    border: 1px solid $border-primary;
+    border-radius: $radius-md;
+}
+
+.crossfader-label {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-bold;
+    color: $secondary-green;
+    letter-spacing: 2px;
+    text-align: center;
+}
+
+.crossfader-markers {
+    display: flex;
+    justify-content: space-between;
+    font-size: $font-size-xs;
+    color: $text-secondary;
+    padding: 0 $space-xs;
+
+    .marker {
+        &.center {
+            color: $secondary-green;
+            font-size: $font-size-md;
+        }
+    }
+}
+
+::ng-deep .crossfader-slider {
+    width: 100%;
+
+    .p-slider {
+        background: linear-gradient(to right, $primary-orange, $bg-darker, $secondary-green) !important;
+        border: 2px solid $border-primary !important;
+        height: 40px !important;
+    }
+
+    .p-slider-range {
+        display: none !important; // Hide range for crossfader
+    }
+
+    .p-slider-handle {
+        width: 30px !important;
+        height: 50px !important;
+        border-radius: $radius-sm !important;
+        background: linear-gradient(to bottom, $bg-elevated, $bg-secondary) !important;
+        border: 3px solid $secondary-green !important;
+        box-shadow: 0 4px 12px rgba($secondary-green, 0.5) !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+    }
+}
+
+.crossfader-value {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-bold;
+    color: $secondary-green;
+    font-family: 'Courier New', monospace;
+    text-align: center;
+    padding: $space-xs;
+}

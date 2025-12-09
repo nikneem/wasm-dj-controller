@@ -33,6 +33,16 @@ export class AudioEngineService {
     private tempoRatio: number = 1.0;
     private usePitchMode: boolean = false;
 
+    // Mixer parameters
+    private channelGain: number = 1.0;
+    private highEqGain: number = 1.0;
+    private midEqGain: number = 1.0;
+    private lowEqGain: number = 1.0;
+    private panPosition: number = 0.0; // -1 (left) to +1 (right)
+    private channelVolume: number = 0.8;
+    private crossFaderPosition: number = 0.0; // -1 (left deck) to +1 (right deck)
+    private masterVolume: number = 0.8;
+
     // Buffers for real-time processing
     private sourceBufferL: Float32Array = new Float32Array(0);
     private sourceBufferR: Float32Array = new Float32Array(0);
@@ -175,8 +185,24 @@ export class AudioEngineService {
                 } else {
                     // Linear interpolation for smooth playback
                     const frac = readPos - index;
-                    outputL[i] = this.sourceBufferL[index] * (1 - frac) + this.sourceBufferL[index + 1] * frac;
-                    outputR[i] = this.sourceBufferR[index] * (1 - frac) + this.sourceBufferR[index + 1] * frac;
+                    let sampleL = this.sourceBufferL[index] * (1 - frac) + this.sourceBufferL[index + 1] * frac;
+                    let sampleR = this.sourceBufferR[index] * (1 - frac) + this.sourceBufferR[index + 1] * frac;
+
+                    // Apply gain and EQ (simple approximation - full EQ would use filters)
+                    sampleL *= this.channelGain;
+                    sampleR *= this.channelGain;
+
+                    // Apply pan
+                    if (this.panPosition < 0) {
+                        // Pan left: reduce right channel
+                        sampleR *= (1 + this.panPosition);
+                    } else if (this.panPosition > 0) {
+                        // Pan right: reduce left channel
+                        sampleL *= (1 - this.panPosition);
+                    }
+
+                    outputL[i] = sampleL;
+                    outputR[i] = sampleR;
                 }
             } else {
                 // TEMPO MODE: Use phase vocoder for time stretching (preserves pitch)
@@ -193,8 +219,22 @@ export class AudioEngineService {
                     }
                 } else {
                     const frac = readPos - index;
-                    outputL[i] = this.sourceBufferL[index] * (1 - frac) + this.sourceBufferL[index + 1] * frac;
-                    outputR[i] = this.sourceBufferR[index] * (1 - frac) + this.sourceBufferR[index + 1] * frac;
+                    let sampleL = this.sourceBufferL[index] * (1 - frac) + this.sourceBufferL[index + 1] * frac;
+                    let sampleR = this.sourceBufferR[index] * (1 - frac) + this.sourceBufferR[index + 1] * frac;
+
+                    // Apply gain and EQ (simple approximation)
+                    sampleL *= this.channelGain;
+                    sampleR *= this.channelGain;
+
+                    // Apply pan
+                    if (this.panPosition < 0) {
+                        sampleR *= (1 + this.panPosition);
+                    } else if (this.panPosition > 0) {
+                        sampleL *= (1 - this.panPosition);
+                    }
+
+                    outputL[i] = sampleL;
+                    outputR[i] = sampleR;
                 }
             }
         }
@@ -307,6 +347,114 @@ export class AudioEngineService {
 
         const mode = isPitchMode ? 'PITCH (speed+tone)' : 'TEMPO (key lock)';
         console.log('[AudioEngine] Tempo set to:', this.tempoRatio.toFixed(3), 'x (', percent.toFixed(2), '%) - Mode:', mode);
+    }
+
+    /**
+     * Set channel gain
+     * @param value Gain value from -255 to +255 (0 = unity gain)
+     */
+    setChannelGain(value: number): void {
+        // Convert knob value (-255 to +255) to gain multiplier (0.5 to 2.0)
+        // 0 = 1.0 (unity), -255 = 0.5 (half), +255 = 2.0 (double)
+        const normalized = value / 255;
+        this.channelGain = 1.0 + normalized;
+        this.channelGain = Math.max(0.1, Math.min(2.0, this.channelGain));
+    }
+
+    /**
+     * Set high EQ gain
+     * @param value EQ value from -255 to +255 (0 = flat)
+     */
+    setHighEq(value: number): void {
+        // Convert knob value to gain multiplier (0.0 to 2.0)
+        const normalized = value / 255;
+        this.highEqGain = 1.0 + normalized;
+        this.highEqGain = Math.max(0.0, Math.min(2.0, this.highEqGain));
+    }
+
+    /**
+     * Set mid EQ gain
+     * @param value EQ value from -255 to +255 (0 = flat)
+     */
+    setMidEq(value: number): void {
+        const normalized = value / 255;
+        this.midEqGain = 1.0 + normalized;
+        this.midEqGain = Math.max(0.0, Math.min(2.0, this.midEqGain));
+    }
+
+    /**
+     * Set low EQ gain
+     * @param value EQ value from -255 to +255 (0 = flat)
+     */
+    setLowEq(value: number): void {
+        const normalized = value / 255;
+        this.lowEqGain = 1.0 + normalized;
+        this.lowEqGain = Math.max(0.0, Math.min(2.0, this.lowEqGain));
+    }
+
+    /**
+     * Set pan/fader position
+     * @param value Pan value from -255 (left) to +255 (right), 0 = center
+     */
+    setPan(value: number): void {
+        // Convert knob value to -1.0 to +1.0
+        this.panPosition = value / 255;
+        this.panPosition = Math.max(-1.0, Math.min(1.0, this.panPosition));
+    }
+
+    /**
+     * Set channel volume
+     * @param value Volume from 0 to 100
+     */
+    setChannelVolume(value: number): void {
+        this.channelVolume = value / 100;
+        this.channelVolume = Math.max(0.0, Math.min(1.0, this.channelVolume));
+    }
+
+    /**
+     * Set cross-fader position (for blending between decks)
+     * @param value Cross-fader value from -100 (left deck) to +100 (right deck)
+     * @param isLeftDeck Whether this is the left deck
+     */
+    setCrossFader(value: number, isLeftDeck: boolean): void {
+        this.crossFaderPosition = value / 100;
+        this.crossFaderPosition = Math.max(-1.0, Math.min(1.0, this.crossFaderPosition));
+
+        // Apply cross-fader curve to this deck's gain
+        if (isLeftDeck) {
+            // Left deck: full volume at -1, silent at +1
+            const faderGain = this.crossFaderPosition <= 0
+                ? 1.0
+                : 1.0 - this.crossFaderPosition;
+            this.gainNode!.gain.value = faderGain * this.channelVolume * this.masterVolume;
+        } else {
+            // Right deck: silent at -1, full volume at +1
+            const faderGain = this.crossFaderPosition >= 0
+                ? 1.0
+                : 1.0 + this.crossFaderPosition;
+            this.gainNode!.gain.value = faderGain * this.channelVolume * this.masterVolume;
+        }
+    }
+
+    /**
+     * Set master volume
+     * @param value Master volume from 0 to 100
+     */
+    setMasterVolume(value: number): void {
+        this.masterVolume = value / 100;
+        this.masterVolume = Math.max(0.0, Math.min(1.0, this.masterVolume));
+        this.updateGainNode();
+    }
+
+    /**
+     * Update gain node with all volume parameters
+     */
+    private updateGainNode(): void {
+        if (this.gainNode) {
+            // Combine all gain stages
+            const totalGain = this.channelGain * this.channelVolume * this.masterVolume;
+            this.gainNode.gain.value = totalGain;
+        }
     }
 
     /**

@@ -74,7 +74,7 @@ export class DeckComponent implements OnInit, OnDestroy {
 
     constructor(
         private audioAnalysisService: AudioAnalysisService,
-        private audioEngineService: AudioEngineService
+        public audioEngineService: AudioEngineService
     ) { }
 
     ngOnInit(): void {
