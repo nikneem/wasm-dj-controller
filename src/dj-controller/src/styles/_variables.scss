@@ -1,0 +1,218 @@
+// ============================================
+// WASM DJ Controller - Theme Variables
+// ============================================
+
+// Primary Colors
+// ============================================
+$primary-orange: #ff6b35; // Vibrant, appealing orange
+$primary-orange-light: #ff8c5e; // Lighter variant for hover states
+$primary-orange-lighter: #ffad87; // Even lighter for backgrounds
+$primary-orange-dark: #e64a1a; // Darker variant for active states
+$primary-orange-darker: #cc3d10; // Darkest variant
+
+// Secondary Colors
+// ============================================
+$secondary-green: #4a6741; // Mildly dark green
+$secondary-green-light: #5e7d54; // Lighter variant
+$secondary-green-lighter: #7a9670; // Even lighter
+$secondary-green-dark: #3a5133; // Darker variant
+$secondary-green-darker: #2a3d25; // Darkest variant
+
+// Background Colors (Dark Theme)
+// ============================================
+$bg-primary: #333333; // Main background - very dark grey
+$bg-secondary: #404040; // Secondary surfaces
+$bg-tertiary: #4d4d4d; // Elevated surfaces (cards, panels)
+$bg-elevated: #5a5a5a; // Highest elevation (modals, dropdowns)
+$bg-darker: #262626; // Even darker for contrast
+$bg-darkest: #1a1a1a; // Deepest background
+
+// Text Colors
+// ============================================
+$text-primary: #cccccc; // Main text - almost white
+$text-secondary: #b3b3b3; // Secondary text
+$text-tertiary: #999999; // Tertiary text (labels, hints)
+$text-disabled: #666666; // Disabled state text
+$text-white: #ffffff; // Pure white for emphasis
+$text-muted: #808080; // Muted text
+
+// Border & Divider Colors
+// ============================================
+$border-primary: #4d4d4d; // Main borders
+$border-secondary: #595959; // Secondary borders
+$border-light: #666666; // Lighter borders
+$border-lighter: #737373; // Even lighter
+$divider: rgba(255, 255, 255, 0.1); // Subtle dividers
+
+// Status Colors
+// ============================================
+$success: #4caf50; // Success states
+$success-light: #66bb6a;
+$success-dark: #388e3c;
+
+$warning: #ffb300; // Warning states
+$warning-light: #ffc233;
+$warning-dark: #ff8f00;
+
+$error: #f44336; // Error states
+$error-light: #ef5350;
+$error-dark: #d32f2f;
+
+$info: #2196f3; // Info states
+$info-light: #42a5f5;
+$info-dark: #1976d2;
+
+// Interactive States
+// ============================================
+$hover-overlay: rgba(255, 255, 255, 0.05);
+$active-overlay: rgba(255, 255, 255, 0.1);
+$focus-ring: rgba(255, 107, 53, 0.5); // Orange with transparency
+$disabled-opacity: 0.4;
+
+// Shadow & Elevation
+// ============================================
+$shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+$shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+$shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+$shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.6);
+$shadow-glow: 0 0 20px rgba(255, 107, 53, 0.3); // Orange glow
+
+// Spacing Scale (8px base)
+// ============================================
+$space-xs: 0.25rem; // 4px
+$space-sm: 0.5rem; // 8px
+$space-md: 1rem; // 16px
+$space-lg: 1.5rem; // 24px
+$space-xl: 2rem; // 32px
+$space-2xl: 3rem; // 48px
+$space-3xl: 4rem; // 64px
+
+// Border Radius
+// ============================================
+$radius-sm: 0.25rem; // 4px
+$radius-md: 0.5rem; // 8px
+$radius-lg: 1rem; // 16px
+$radius-xl: 1.5rem; // 24px
+$radius-full: 9999px; // Fully rounded
+
+// Typography
+// ============================================
+$font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+$font-family-mono: "Fira Code", "Consolas", "Monaco", monospace;
+
+$font-size-xs: 0.75rem; // 12px
+$font-size-sm: 0.875rem; // 14px
+$font-size-md: 1rem; // 16px
+$font-size-lg: 1.125rem; // 18px
+$font-size-xl: 1.25rem; // 20px
+$font-size-2xl: 1.5rem; // 24px
+$font-size-3xl: 2rem; // 32px
+$font-size-4xl: 2.5rem; // 40px
+$font-size-5xl: 3rem; // 48px
+
+$font-weight-light: 300;
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+$font-weight-extrabold: 800;
+
+// Transitions
+// ============================================
+$transition-fast: 150ms ease-in-out;
+$transition-base: 250ms ease-in-out;
+$transition-slow: 350ms ease-in-out;
+
+// Z-Index Scale
+// ============================================
+$z-index-base: 1;
+$z-index-dropdown: 1000;
+$z-index-sticky: 1020;
+$z-index-fixed: 1030;
+$z-index-modal-backdrop: 1040;
+$z-index-modal: 1050;
+$z-index-popover: 1060;
+$z-index-tooltip: 1070;
+
+// Audio-Specific Colors
+// ============================================
+$waveform-color: $primary-orange;
+$waveform-bg: $bg-darker;
+$beat-marker: $primary-orange-light;
+$beat-marker-active: $primary-orange;
+$level-meter-peak: $error;
+$level-meter-warn: $warning;
+$level-meter-normal: $success;
+
+// Component-Specific Variables
+// ============================================
+
+// Deck colors
+$deck-left: $primary-orange;
+$deck-right: $secondary-green;
+$deck-inactive: $text-tertiary;
+
+// Crossfader
+$crossfader-track: $bg-secondary;
+$crossfader-thumb: $primary-orange;
+$crossfader-active: $primary-orange-light;
+
+// Slider/Knob
+$slider-track: $bg-secondary;
+$slider-fill: $primary-orange;
+$slider-thumb: $primary-orange-light;
+
+// Button variants
+$button-primary-bg: $primary-orange;
+$button-primary-hover: $primary-orange-light;
+$button-primary-active: $primary-orange-dark;
+$button-secondary-bg: $secondary-green;
+$button-secondary-hover: $secondary-green-light;
+$button-secondary-active: $secondary-green-dark;
+
+// Cards & Panels
+$card-bg: $bg-tertiary;
+$card-border: $border-primary;
+$panel-header-bg: $bg-secondary;
+
+// ============================================
+// Utility Mixins
+// ============================================
+
+@mixin transition($property: all) {
+    transition: $property $transition-base;
+}
+
+@mixin hover-lift {
+    transition: transform $transition-fast, box-shadow $transition-fast;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: $shadow-lg;
+    }
+}
+
+@mixin focus-ring {
+    outline: 2px solid $focus-ring;
+    outline-offset: 2px;
+}
+
+@mixin text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@mixin gradient-orange {
+    background: linear-gradient(135deg, $primary-orange 0%, $primary-orange-dark 100%);
+}
+
+@mixin gradient-green {
+    background: linear-gradient(135deg, $secondary-green-light 0%, $secondary-green-dark 100%);
+}
+
+@mixin glass-effect {
+    background: rgba(77, 77, 77, 0.6);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}

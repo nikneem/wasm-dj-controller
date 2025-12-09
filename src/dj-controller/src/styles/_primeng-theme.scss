@@ -1,0 +1,81 @@
+// ============================================
+// Custom PrimeNG Theme - WASM DJ Controller
+// Dark theme with orange primary and green secondary
+// ============================================
+
+@use './variables' as *;
+@use 'sass:color';
+
+// Override PrimeNG CSS variables
+:root {
+    // Primary color (Orange)
+    --primary-50: #{color.adjust($primary-orange, $lightness: 40%)};
+    --primary-100: #{color.adjust($primary-orange, $lightness: 30%)};
+    --primary-200: #{color.adjust($primary-orange, $lightness: 20%)};
+    --primary-300: #{color.adjust($primary-orange, $lightness: 10%)};
+    --primary-400: #{$primary-orange-light};
+    --primary-500: #{$primary-orange};
+    --primary-600: #{$primary-orange-dark};
+    --primary-700: #{$primary-orange-darker};
+    --primary-800: #{color.adjust($primary-orange-darker, $lightness: -10%)};
+    --primary-900: #{color.adjust($primary-orange-darker, $lightness: -20%)};
+
+    // Surface colors (Dark theme)
+    --surface-0: #{$bg-primary};
+    --surface-50: #{$bg-secondary};
+    --surface-100: #{$bg-tertiary};
+    --surface-200: #{$bg-elevated};
+    --surface-300: #{lighten($bg-elevated, 5%)};
+    --surface-400: #{lighten($bg-elevated, 10%)};
+    --surface-500: #{lighten($bg-elevated, 15%)};
+    --surface-600: #{lighten($bg-elevated, 20%)};
+    --surface-700: #{lighten($bg-elevated, 25%)};
+    --surface-800: #{lighten($bg-elevated, 30%)};
+    --surface-900: #{lighten($bg-elevated, 35%)};
+
+    // Text colors
+    --text-color: #{$text-primary};
+    --text-color-secondary: #{$text-secondary};
+    --text-color-disabled: #{$text-disabled};
+
+    // Border colors
+    --border-color: #{$border-primary};
+
+    // Focus
+    --focus-ring: 0 0 0 0.2rem #{$focus-ring};
+
+    // Semantic colors
+    --green-500: #{$secondary-green};
+    --green-600: #{$secondary-green-dark};
+    --green-700: #{$secondary-green-darker};
+
+    --red-500: #{$error};
+    --red-600: #{$error-dark};
+
+    --blue-500: #{$info};
+    --blue-600: #{$info-dark};
+
+    --yellow-500: #{$warning};
+    --yellow-600: #{$warning-dark};
+}
+
+// Component-specific overrides
+.p-component {
+    font-family: $font-family-base;
+}
+
+// Dark mode adjustments
+.p-dark {
+    --surface-ground: #{$bg-primary};
+    --surface-section: #{$bg-secondary};
+    --surface-card: #{$bg-tertiary};
+    --surface-overlay: #{$bg-elevated};
+    --surface-border: #{$border-primary};
+    --surface-hover: #{$hover-overlay};
+
+    --text-color: #{$text-primary};
+    --text-color-secondary: #{$text-secondary};
+
+    --primary-color: #{$primary-orange};
+    --primary-color-text: #{$text-white};
+}

@@ -1,0 +1,158 @@
+<div class="home-container">
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-content">
+            <div class="hero-badge">
+                <i class="pi pi-bolt"></i>
+                <span>WebAssembly Powered</span>
+            </div>
+
+            <h1 class="hero-title">
+                Start Mixing Like a
+                <span class="gradient-text">Pro DJ</span>
+            </h1>
+
+            <p class="hero-description">
+                Experience professional DJ mixing in your browser with real-time tempo control,
+                pitch shifting, and harmonic mixing powered by cutting-edge WebAssembly technology.
+            </p>
+
+            <div class="hero-actions">
+                <button pButton label="Start DJing Now" icon="pi pi-play" class="p-button-lg hero-button-primary"
+                    [routerLink]="['/mixer']">
+                </button>
+                <button pButton label="Learn More" icon="pi pi-info-circle"
+                    class="p-button-lg p-button-outlined hero-button-secondary" [routerLink]="['/about']">
+                </button>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="stats-bar">
+                <div class="stat-item" *ngFor="let stat of stats">
+                    <div class="stat-value">{{ stat.value }}</div>
+                    <div class="stat-label">{{ stat.label }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Animated Visual Element -->
+        <div class="hero-visual">
+            <div class="vinyl-container">
+                <div class="vinyl vinyl-left">
+                    <div class="vinyl-center"></div>
+                    <div class="vinyl-groove"></div>
+                    <div class="vinyl-groove"></div>
+                    <div class="vinyl-groove"></div>
+                </div>
+                <div class="vinyl vinyl-right">
+                    <div class="vinyl-center"></div>
+                    <div class="vinyl-groove"></div>
+                    <div class="vinyl-groove"></div>
+                    <div class="vinyl-groove"></div>
+                </div>
+            </div>
+            <div class="waveform-visual">
+                <div class="waveform-bar" *ngFor="let bar of [1,2,3,4,5,6,7,8,9,10,11,12]"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section">
+        <div class="section-header">
+            <h2>Why Choose WASM DJ Controller?</h2>
+            <p>Professional-grade features for the modern DJ</p>
+        </div>
+
+        <div class="features-grid">
+            <p-card *ngFor="let feature of features" class="feature-card">
+                <ng-template pTemplate="header">
+                    <div class="feature-icon">
+                        <i [class]="feature.icon"></i>
+                    </div>
+                </ng-template>
+                <ng-template pTemplate="title">
+                    {{ feature.title }}
+                </ng-template>
+                <ng-template pTemplate="content">
+                    <p>{{ feature.description }}</p>
+                </ng-template>
+            </p-card>
+        </div>
+    </section>
+
+    <!-- Technology Section -->
+    <section class="tech-section">
+        <div class="tech-content">
+            <div class="tech-text">
+                <h2>Powered by WebAssembly</h2>
+                <p class="tech-description">
+                    Our audio engine is built with Rust and compiled to WebAssembly, delivering
+                    near-native performance directly in your browser. No installations, no latency,
+                    just pure, uninterrupted audio processing.
+                </p>
+                <ul class="tech-features">
+                    <li>
+                        <i class="pi pi-check-circle"></i>
+                        <span>Phase Vocoder for tempo stretching without pitch change</span>
+                    </li>
+                    <li>
+                        <i class="pi pi-check-circle"></i>
+                        <span>Real-time BPM detection and key analysis</span>
+                    </li>
+                    <li>
+                        <i class="pi pi-check-circle"></i>
+                        <span>3-band parametric equalizer with ±12dB range</span>
+                    </li>
+                    <li>
+                        <i class="pi pi-check-circle"></i>
+                        <span>Constant-power crossfader for smooth transitions</span>
+                    </li>
+                </ul>
+                <button pButton label="View Technical Docs" icon="pi pi-book" class="p-button-secondary"
+                    [routerLink]="['/docs']">
+                </button>
+            </div>
+            <div class="tech-visual">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Rust + WebAssembly</span>
+                        <div class="code-dots">
+                            <span class="dot dot-orange"></span>
+                            <span class="dot dot-green"></span>
+                            <span class="dot dot-grey"></span>
+                        </div>
+                    </div>
+                    <pre class="code-content"><code><span class="code-keyword">pub fn</span> <span class="code-function">process_frame</span>(
+  input: <span class="code-type">&amp;[f32]</span>,
+  tempo: <span class="code-type">f32</span>,
+  pitch: <span class="code-type">i32</span>
+) -> <span class="code-type">Vec&lt;f32&gt;</span> {{ '{' }}
+  <span class="code-comment">// Phase Vocoder algorithm</span>
+  <span class="code-keyword">let</span> spectrum = fft(input);
+  <span class="code-keyword">let</span> stretched = 
+    time_stretch(spectrum, tempo);
+  <span class="code-keyword">let</span> shifted = 
+    pitch_shift(stretched, pitch);
+  ifft(shifted)
+{{ '}' }}</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="cta-content">
+            <h2>Ready to Start Mixing?</h2>
+            <p>
+                Join thousands of DJs using the most advanced browser-based mixing platform.
+                No downloads, no installations—just open and mix.
+            </p>
+            <button pButton label="Launch DJ Mixer" icon="pi pi-play-circle" class="p-button-lg cta-button"
+                [routerLink]="['/mixer']">
+            </button>
+        </div>
+        <div class="cta-background"></div>
+    </section>
+</div>
