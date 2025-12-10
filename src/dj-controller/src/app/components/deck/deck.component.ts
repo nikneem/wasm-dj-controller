@@ -175,13 +175,17 @@ export class DeckComponent implements OnInit, OnDestroy {
         this.audioEngineService.setTempoPercent(value, this.isPitchMode);
 
         // Update BPM based on tempo (with decimal precision)
+        // Important: This shows the EFFECTIVE BPM at current playback speed
+        // Formula: effective_bpm = original_bpm * (1 + tempo_percentage/100)
+        // Example: 128 BPM at +5% tempo = 128 * 1.05 = 134.4 BPM
         if (this.originalBPM > 0) {
             const tempoMultiplier = 1.0 + (value / 100);
-            this.bpm = this.originalBPM * tempoMultiplier;
+            // Round to 1 decimal place for display accuracy
+            this.bpm = Math.round(this.originalBPM * tempoMultiplier * 10) / 10;
         }
 
         const mode = this.isPitchMode ? 'PITCH (speed+tone)' : 'TEMPO (key lock)';
-        console.log('[Deck] Tempo changed to:', value, '% - Mode:', mode, '- Range: ±' + this.tempoRange + '% - BPM now:', this.bpm);
+        console.log('[Deck] Tempo changed to:', value, '% - Mode:', mode, '- Range: ±' + this.tempoRange + '% - BPM now:', this.bpm.toFixed(1));
     }
 
     onRangeToggle(): void {
@@ -286,10 +290,10 @@ export class DeckComponent implements OnInit, OnDestroy {
         // Apply pitch bend without saving to tempoValue
         this.audioEngineService.setTempoPercent(clampedTempo, this.isPitchMode);
 
-        // Update BPM display to show bent tempo
+        // Update BPM display to show bent tempo (with proper rounding)
         if (this.originalBPM > 0) {
             const tempoMultiplier = 1.0 + (clampedTempo / 100);
-            this.bpm = this.originalBPM * tempoMultiplier;
+            this.bpm = Math.round(this.originalBPM * tempoMultiplier * 10) / 10;
         }
     }
 
