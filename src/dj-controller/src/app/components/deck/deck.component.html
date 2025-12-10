@@ -59,6 +59,7 @@
     <div class="main-controls">
         <!-- Transport Controls (Left) -->
         <div class="transport-controls">
+            <app-beat-counter></app-beat-counter>
             <button class="transport-btn cue-btn" [class.active]="isCued" (mousedown)="onCue()">
                 <div class="led-rim led-orange" [class.lit]="isCued"></div>
                 <span class="btn-label">CUE</span>

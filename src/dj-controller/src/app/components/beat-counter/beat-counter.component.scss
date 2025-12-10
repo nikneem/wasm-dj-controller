@@ -1,0 +1,61 @@
+@use '../../../styles/variables' as *;
+
+.beat-counter-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: $bg-darker;
+    border: 2px solid $border-primary;
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all $transition-fast;
+    font-family: 'Courier New', monospace;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-sm;
+    color: $text-secondary;
+
+    &:hover {
+        transform: scale(1.05);
+        border-color: $primary-orange;
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
+
+    &.has-bpm {
+        background: linear-gradient(135deg, rgba($primary-orange, 0.2), rgba($primary-orange, 0.1));
+        border-color: $primary-orange;
+        color: $primary-orange;
+        box-shadow: 0 0 15px rgba($primary-orange, 0.3);
+        animation: beat-pulse 0.5s ease-in-out;
+    }
+
+    .beat-counter-display {
+        font-size: $font-size-md;
+        line-height: 1;
+        z-index: 1;
+    }
+
+    .beat-counter-icon {
+        i {
+            font-size: $font-size-lg;
+            opacity: 0.5;
+        }
+    }
+}
+
+@keyframes beat-pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}

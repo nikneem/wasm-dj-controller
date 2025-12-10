@@ -7,12 +7,13 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { AudioAnalysisService } from '../../services/audio-analysis.service';
 import { AudioEngineService } from '../../services/audio-engine.service';
 import { BeatGridComponent } from '../beat-grid/beat-grid.component';
+import { BeatCounterComponent } from '../beat-counter/beat-counter.component';
 import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-deck',
     standalone: true,
-    imports: [CommonModule, ButtonModule, SliderModule, FormsModule, ToggleSwitchModule, BeatGridComponent],
+    imports: [CommonModule, ButtonModule, SliderModule, FormsModule, ToggleSwitchModule, BeatGridComponent, BeatCounterComponent],
     templateUrl: './deck.component.html',
     styleUrls: ['./deck.component.scss'],
     providers: [AudioEngineService] // Provide a separate instance for each deck
