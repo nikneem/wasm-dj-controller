@@ -64,20 +64,66 @@ impl AudioAnalyzer {
     }
 
     /// Detect BPM from audio samples using Multi-band Spectral Flux Analysis
-    /// This method is significantly more accurate than simple energy-based detection
+    /// with multi-section consensus voting for improved accuracy and reliability
     /// Returns BPM as u32
     pub fn detect_bpm(samples: &[f32], sample_rate: u32) -> u32 {
-        if samples.len() < sample_rate as usize {
-            return 120; // Default BPM
+        if samples.len() < sample_rate as usize * 2 {
+            return 120; // Default BPM - need at least 2 seconds
         }
 
+        // Analyze multiple sections of the track for consensus
+        let section_duration = 10.0; // 10 seconds per section
+        let section_samples = (sample_rate as f32 * section_duration) as usize;
+        let num_sections = (samples.len() / section_samples).min(5).max(1); // Analyze up to 5 sections
+        
+        let mut bpm_candidates = Vec::new();
+
+        // Analyze each section
+        for section_idx in 0..num_sections {
+            // Use strategic positions: start, 1/4, middle, 3/4, end
+            let position = match section_idx {
+                0 => 0, // Start (intro might be less rhythmic)
+                1 => samples.len() / 4, // First quarter
+                2 => samples.len() / 2, // Middle (usually most stable)
+                3 => (samples.len() * 3) / 4, // Third quarter
+                4 => samples.len().saturating_sub(section_samples), // Near end
+                _ => section_idx * section_samples,
+            };
+
+            let start = position;
+            let end = (start + section_samples).min(samples.len());
+            
+            if end - start < sample_rate as usize * 5 {
+                continue; // Skip if section is too short
+            }
+
+            let section_samples_slice = &samples[start..end];
+            let bpm = Self::analyze_section_bpm(section_samples_slice, sample_rate);
+            
+            if bpm > 0 {
+                bpm_candidates.push(bpm);
+            }
+        }
+
+        if bpm_candidates.is_empty() {
+            return 120;
+        }
+
+        // Use consensus with octave correction
+        let final_bpm = Self::consensus_bpm(&bpm_candidates);
+
+        final_bpm
+    }
+
+    /// Analyze a single section for BPM
+    fn analyze_section_bpm(samples: &[f32], sample_rate: u32) -> u32 {
         // Parameters for spectral analysis
         let fft_size = 2048;
         let hop_size = 512; // 75% overlap for better temporal resolution
         let num_frames = (samples.len() - fft_size) / hop_size;
 
         if num_frames < 4 {
-            return 120;
+            return 0;
         }
 
         // Compute spectral flux using multi-band analysis
@@ -90,13 +136,70 @@ impl AudioAnalyzer {
         );
 
         if onset_strength.len() < 4 {
-            return 120;
+            return 0;
         }
 
         // Use autocorrelation to find periodic patterns
         let bpm = Self::estimate_bpm_from_onsets(&onset_strength, sample_rate, hop_size);
 
         bpm
+    }
+
+    /// Determine consensus BPM from multiple candidates using clustering and octave correction
+    fn consensus_bpm(candidates: &[u32]) -> u32 {
+        if candidates.is_empty() {
+            return 120;
+        }
+
+        if candidates.len() == 1 {
+            return candidates[0];
+        }
+
+        // Normalize all candidates to the same octave range (80-160 BPM)
+        let normalized: Vec<f32> = candidates
+            .iter()
+            .map(|&bpm| Self::normalize_to_octave(bpm as f32, 80.0, 160.0))
+            .collect();
+
+        // Use weighted voting - candidates closer to each other get more weight
+        let mut best_bpm = normalized[0];
+        let mut best_score = 0.0;
+
+        for &candidate in &normalized {
+            let mut score = 0.0;
+            
+            for &other in &normalized {
+                // Calculate similarity (inverse of difference)
+                let diff = (candidate - other).abs();
+                let similarity = 1.0 / (1.0 + diff / 10.0); // Normalize by 10 BPM
+                score += similarity;
+            }
+            
+            if score > best_score {
+                best_score = score;
+                best_bpm = candidate;
+            }
+        }
+
+        // Round to nearest integer
+        best_bpm.round() as u32
+    }
+
+    /// Normalize BPM to target octave range by halving or doubling
+    fn normalize_to_octave(bpm: f32, min_target: f32, max_target: f32) -> f32 {
+        let mut normalized = bpm;
+        
+        // Double if too slow
+        while normalized < min_target && normalized < 200.0 {
+            normalized *= 2.0;
+        }
+        
+        // Halve if too fast
+        while normalized > max_target && normalized > 60.0 {
+            normalized /= 2.0;
+        }
+        
+        normalized
     }
 
     /// Compute multi-band spectral flux for onset detection
@@ -193,7 +296,8 @@ impl AudioAnalyzer {
         }
     }
 
-    /// Estimate BPM from onset strength function using autocorrelation
+    /// Estimate BPM from onset strength function using enhanced autocorrelation
+    /// with peak detection and octave relationship analysis
     fn estimate_bpm_from_onsets(onset_strength: &[f32], sample_rate: u32, hop_size: usize) -> u32 {
         // Define BPM search range
         let min_bpm = 60.0;
@@ -226,14 +330,15 @@ impl AudioAnalyzer {
             }
         }
 
-        // Find peak in autocorrelation (best tempo candidate)
-        let (max_idx, _) = autocorr
-            .iter()
-            .enumerate()
-            .max_by(|a, b| a.1.partial_cmp(b.1).unwrap())
-            .unwrap_or((0, &0.0));
+        // Find multiple peaks in autocorrelation
+        let peaks = Self::find_autocorr_peaks(&autocorr, min_lag);
+        
+        if peaks.is_empty() {
+            return 120;
+        }
 
-        let best_lag = min_lag + max_idx;
+        // Select best peak considering strength and musical relevance
+        let best_lag = Self::select_best_tempo_peak(&peaks, frames_per_second);
 
         // Convert lag back to BPM
         let bpm = 60.0 * frames_per_second / best_lag as f32;
@@ -242,6 +347,72 @@ impl AudioAnalyzer {
         let bpm = bpm.round().clamp(min_bpm, max_bpm);
 
         bpm as u32
+    }
+
+    /// Find peaks in autocorrelation function
+    fn find_autocorr_peaks(autocorr: &[f32], offset: usize) -> Vec<(usize, f32)> {
+        let mut peaks = Vec::new();
+        
+        // Find local maxima with minimum height threshold
+        let mean = autocorr.iter().sum::<f32>() / autocorr.len() as f32;
+        let threshold = mean * 1.2; // Peak must be 20% above mean
+
+        for i in 2..(autocorr.len() - 2) {
+            let val = autocorr[i];
+            
+            // Check if this is a local maximum
+            if val > threshold
+                && val > autocorr[i - 1]
+                && val > autocorr[i - 2]
+                && val > autocorr[i + 1]
+                && val > autocorr[i + 2]
+            {
+                peaks.push((i + offset, val));
+            }
+        }
+
+        // Sort by strength (descending)
+        peaks.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+        
+        // Keep top 5 peaks
+        peaks.truncate(5);
+        
+        peaks
+    }
+
+    /// Select the best tempo peak from candidates
+    fn select_best_tempo_peak(peaks: &[(usize, f32)], frames_per_second: f32) -> usize {
+        if peaks.is_empty() {
+            return 50; // Fallback
+        }
+
+        // Prefer BPMs in the "sweet spot" ranges for different genres
+        // House/Techno: 120-130, Drum & Bass: 160-180, Hip-Hop: 80-100
+        let mut best_score = 0.0;
+        let mut best_lag = peaks[0].0;
+
+        for &(lag, strength) in peaks {
+            let bpm = 60.0 * frames_per_second / lag as f32;
+            
+            // Calculate score based on strength and musical preference
+            let mut score = strength;
+            
+            // Boost score for common tempo ranges
+            if (115.0..=135.0).contains(&bpm) {
+                score *= 1.3; // House/Techno sweet spot
+            } else if (155.0..=185.0).contains(&bpm) {
+                score *= 1.2; // Drum & Bass range
+            } else if (85.0..=105.0).contains(&bpm) {
+                score *= 1.15; // Hip-Hop/slower electronic
+            }
+            
+            if score > best_score {
+                best_score = score;
+                best_lag = lag;
+            }
+        }
+
+        best_lag
     }
 
     /// Detect key using chromatic energy distribution
