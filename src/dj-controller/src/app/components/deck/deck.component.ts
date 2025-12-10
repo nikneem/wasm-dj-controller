@@ -107,25 +107,20 @@ export class DeckComponent implements OnInit, OnDestroy {
             return;
         }
 
-        console.log('[Deck] onPlayPause() - isPlaying:', this.isPlaying, 'isPaused:', this.isPaused);
-
         if (this.isPlaying) {
             // If playing, pause and start flashing
-            console.log('[Deck] Pausing playback');
-            this.audioEngineService.pause();
             this.isPlaying = false;
             this.isPaused = true;
+            this.audioEngineService.pause();
         } else if (this.isPaused) {
             // If paused (after play), resume playing
-            console.log('[Deck] Resuming from pause');
-            this.audioEngineService.play();
             this.isPaused = false;
             this.isPlaying = true;
+            this.audioEngineService.play();
         } else {
             // If stopped, start playing
-            console.log('[Deck] Starting playback from beginning');
-            this.audioEngineService.play();
             this.isPlaying = true;
+            this.audioEngineService.play();
         }
     }
 

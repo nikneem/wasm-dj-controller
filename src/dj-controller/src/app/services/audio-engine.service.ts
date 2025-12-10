@@ -17,6 +17,7 @@ export class AudioEngineService {
     private audioContext: AudioContext | null = null;
     private audioBuffer: AudioBuffer | null = null;
     private scriptProcessor: ScriptProcessorNode | null = null;
+    private constantSource: ConstantSourceNode | null = null;
     private gainNode: GainNode | null = null;
 
     // EQ Filters
@@ -55,6 +56,8 @@ export class AudioEngineService {
     private sourceBufferL: Float32Array = new Float32Array(0);
     private sourceBufferR: Float32Array = new Float32Array(0);
     private readPosition: number = 0;
+    private lastUpdateTime: number = 0;
+    private updateThrottle: number = 100; // Update every 100ms
 
     // Observables
     private playbackTimeSubject = new Subject<number>();
@@ -147,15 +150,33 @@ export class AudioEngineService {
             this.readPosition = 0;
             this.isPlayingFlag = false;
 
-            // Initialize gain node if needed
+            // Initialize gain node FIRST - EQ chain will connect to it
             if (!this.gainNode) {
                 this.gainNode = this.audioContext.createGain();
                 this.gainNode.gain.value = 0.8;
             }
 
-            // Initialize EQ filters if needed
+            // Initialize EQ filters (connects to gain node)
             if (!this.lowFilter) {
                 this.initializeEQ();
+            }
+
+            // Pre-create script processor to avoid delay on first play (after EQ is initialized)
+            if (!this.scriptProcessor) {
+                const bufferSize = 4096;
+                this.scriptProcessor = this.audioContext.createScriptProcessor(bufferSize, 2, 2);
+                this.scriptProcessor.onaudioprocess = (e) => this.processAudio(e);
+
+                // Create a silent constant source to drive the script processor
+                this.constantSource = this.audioContext.createConstantSource();
+                this.constantSource.offset.value = 0; // Silent
+
+                // Connect: constantSource -> scriptProcessor -> lowFilter
+                this.constantSource.connect(this.scriptProcessor);
+                this.scriptProcessor.connect(this.lowFilter!);
+
+                // Start the constant source (it runs continuously but silently)
+                this.constantSource.start();
             }
 
             // Initialize WASM processor if loaded
@@ -180,20 +201,13 @@ export class AudioEngineService {
             return;
         }
 
+        console.log('[AudioEngine] play() called - isPlayingFlag:', this.isPlayingFlag, 'scriptProcessor:', !!this.scriptProcessor, 'constantSource:', !!this.constantSource);
+
         // Determine start position
         const startPosition = fromTime !== undefined ? fromTime : (this.currentPlaybackPosition || this.pauseTime);
         this.readPosition = Math.floor(startPosition * this.audioContext.sampleRate);
 
-        console.log('[AudioEngine] Starting playback - Position:', startPosition, 's - Mode:', this.usePitchMode ? 'PITCH' : 'TEMPO');
-
-        // Create script processor for real-time audio processing
-        if (!this.scriptProcessor) {
-            const bufferSize = 4096; // Must be power of 2
-            this.scriptProcessor = this.audioContext.createScriptProcessor(bufferSize, 2, 2);
-            this.scriptProcessor.onaudioprocess = (e) => this.processAudio(e);
-            // Connect through EQ chain
-            this.scriptProcessor.connect(this.lowFilter!);
-        }
+        console.log('[AudioEngine] Starting playback from position:', startPosition, 'readPosition:', this.readPosition, 'sourceBufferL.length:', this.sourceBufferL.length);
 
         this.playbackStartTime = this.audioContext.currentTime - startPosition;
         this.isPlayingFlag = true;
@@ -206,7 +220,14 @@ export class AudioEngineService {
      * Process audio in real-time
      */
     private processAudio(event: AudioProcessingEvent): void {
+        console.log('[AudioEngine] processAudio called - isPlayingFlag:', this.isPlayingFlag, 'audioBuffer:', !!this.audioBuffer, 'sourceBufferL.length:', this.sourceBufferL.length);
+
         if (!this.isPlayingFlag || !this.audioBuffer) {
+            // Clear output buffers when not playing
+            const outputL = event.outputBuffer.getChannelData(0);
+            const outputR = event.outputBuffer.getChannelData(1);
+            outputL.fill(0);
+            outputR.fill(0);
             return;
         }
 
@@ -312,8 +333,6 @@ export class AudioEngineService {
 
         this.isPlayingFlag = false;
         this.pauseTime = this.currentPlaybackPosition;
-
-        console.log('[AudioEngine] Paused at:', this.currentPlaybackPosition.toFixed(2), 's');
     }
 
     /**
@@ -516,19 +535,21 @@ export class AudioEngineService {
     }
 
     /**
-     * Start time update loop
+     * Start time update loop using requestAnimationFrame for optimal performance
      */
     private startTimeUpdateLoop(): void {
-        const updateInterval = 100; // Update every 100ms
-
-        const update = () => {
+        const update = (timestamp: number) => {
             if (this.isPlayingFlag) {
-                this.playbackTimeSubject.next(this.currentPlaybackPosition);
-                setTimeout(update, updateInterval);
+                // Throttle updates to ~100ms to reduce overhead
+                if (timestamp - this.lastUpdateTime >= this.updateThrottle) {
+                    this.playbackTimeSubject.next(this.currentPlaybackPosition);
+                    this.lastUpdateTime = timestamp;
+                }
+                requestAnimationFrame(update);
             }
         };
 
-        update();
+        requestAnimationFrame(update);
     }
 
     private readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {

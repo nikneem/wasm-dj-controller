@@ -59,12 +59,12 @@
     <div class="main-controls">
         <!-- Transport Controls (Left) -->
         <div class="transport-controls">
-            <button class="transport-btn cue-btn" [class.active]="isCued" (click)="onCue()">
+            <button class="transport-btn cue-btn" [class.active]="isCued" (mousedown)="onCue()">
                 <div class="led-rim led-orange" [class.lit]="isCued"></div>
                 <span class="btn-label">CUE</span>
             </button>
             <button class="transport-btn play-btn" [class.active]="isPlaying" [class.paused]="isPaused"
-                (click)="onPlayPause()">
+                (mousedown)="onPlayPause()">
                 <div class="led-rim led-green" [class.lit]="isPlaying" [class.flashing]="isPaused"></div>
                 <i class="pi" [class.pi-play]="!isPlaying" [class.pi-pause]="isPlaying"></i>
             </button>
