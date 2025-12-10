@@ -1,6 +1,4 @@
-<button class="beat-counter-btn" 
-        (mousedown)="onMouseDown()"
-        [class.has-bpm]="bpm !== null">
+<button class="beat-counter-btn" (mousedown)="onMouseDown()" [class.has-bpm]="bpm !== null">
     <span class="beat-counter-display" *ngIf="bpm !== null">
         {{ bpm | number: '1.1-1' }}
     </span>

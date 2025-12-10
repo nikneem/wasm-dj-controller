@@ -22,7 +22,7 @@ export class BeatCounterComponent implements OnDestroy {
 
     onMouseDown(): void {
         const now = Date.now();
-        
+
         // Clear previous timeout
         this.clearResetTimeout();
 
