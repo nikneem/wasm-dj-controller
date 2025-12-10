@@ -73,8 +73,7 @@
         <!-- Jog Wheel (Center) -->
         <div class="jog-wheel-container">
             <div class="jog-wheel" [class.touched]="isJogTouched" [style.transform]="'rotate(' + jogRotation + 'deg)'"
-                (mousedown)="onJogMouseDown($event)" (mouseup)="onJogMouseUp()" (mousemove)="onJogRotate($event)"
-                (mouseleave)="onJogMouseUp()">
+                (mousedown)="onJogMouseDown($event)">
                 <div class="jog-wheel-surface">
                     <div class="jog-center-dot"></div>
                     <div class="jog-marking" *ngFor="let mark of [0,1,2,3,4,5,6,7]"

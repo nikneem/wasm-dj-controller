@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -203,31 +203,23 @@ export class DeckComponent implements OnInit, OnDestroy {
     }
 
     onJogMouseDown(event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+
         this.isJogTouched = true;
         this.lastJogY = event.clientY;
         this.jogVelocity = 0;
+
+        document.body.style.cursor = 'ns-resize';
     }
 
-    onJogMouseUp(): void {
-        this.isJogTouched = false;
-
-        // If playing, reset pitch bend after jog is released
-        if (this.isPlaying && this.pitchBendTimeout) {
-            clearTimeout(this.pitchBendTimeout);
-        }
-
-        // Return to normal tempo when jog is released while playing
-        if (this.isPlaying) {
-            this.pitchBendTimeout = window.setTimeout(() => {
-                this.onTempoChange(this.tempoValue);
-            }, 200);
-        }
-    }
-
+    @HostListener('document:mousemove', ['$event'])
     onJogRotate(event: MouseEvent): void {
         if (!this.isJogTouched || !this.loadedFileName) {
             return;
         }
+
+        event.preventDefault();
 
         // Calculate rotation based on cumulative vertical mouse movement
         // Upward movement = positive rotation (clockwise)
@@ -249,6 +241,28 @@ export class DeckComponent implements OnInit, OnDestroy {
         } else if (this.isPaused || !this.isPlaying) {
             // Seek mode: move through track based on rotation delta
             this.handleSeek(rotationDelta);
+        }
+    }
+
+    @HostListener('document:mouseup')
+    onJogMouseUp(): void {
+        if (!this.isJogTouched) {
+            return;
+        }
+
+        this.isJogTouched = false;
+        document.body.style.cursor = '';
+
+        // If playing, reset pitch bend after jog is released
+        if (this.isPlaying && this.pitchBendTimeout) {
+            clearTimeout(this.pitchBendTimeout);
+        }
+
+        // Return to normal tempo when jog is released while playing
+        if (this.isPlaying) {
+            this.pitchBendTimeout = window.setTimeout(() => {
+                this.onTempoChange(this.tempoValue);
+            }, 200);
         }
     }
 
