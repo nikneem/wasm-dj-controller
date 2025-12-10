@@ -19,29 +19,11 @@
 //! 4. Stretching or compressing the time axis
 //! 5. Resynthesizing audio using modified phase and original magnitude
 
-use rustfft::FftPlanner;
-
 /// Phase vocoder for time-stretching without pitch change
 ///
 /// Implements FFT-based analysis-synthesis with phase unwrapping for
 /// artifact-free time-stretching.
 pub struct PhaseVocoder {
-    fft_size: usize,
-    hop_size: usize,
-    
-    // FFT machinery
-    planner: FftPlanner<f32>,
-    
-    // Buffer storage
-    input_buffer: Vec<f32>,
-    window: Vec<f32>,
-    
-    // Analysis state
-    prev_phase: Vec<f32>,
-    
-    // Resynthesis state
-    grain_position: usize,
-    
     // Control parameters
     stretch_ratio: f32,
 }
@@ -55,20 +37,8 @@ impl PhaseVocoder {
     /// # Performance
     /// - Initialization: ~1ms
     /// - Memory allocation: ~300KB for fft_size=4096
-    pub fn new(fft_size: usize) -> Self {
-        let hop_size = fft_size / 4; // 75% overlap
-        
-        // Initialize Hann window for smooth frame transitions
-        let window = create_hann_window(fft_size);
-        
+    pub fn new(_fft_size: usize) -> Self {
         PhaseVocoder {
-            fft_size,
-            hop_size,
-            planner: FftPlanner::new(),
-            input_buffer: vec![0.0; fft_size * 2],
-            window,
-            prev_phase: vec![0.0; fft_size / 2 + 1],
-            grain_position: 0,
             stretch_ratio: 1.0,
         }
     }
@@ -156,6 +126,7 @@ impl PhaseVocoder {
 /// ```text
 /// w[n] = 0.5 * (1 - cos(2π * n / (N-1)))
 /// ```
+#[allow(dead_code)]
 fn create_hann_window(size: usize) -> Vec<f32> {
     let mut window = vec![0.0; size];
     let n_minus_1 = (size - 1) as f32;
@@ -172,6 +143,7 @@ fn create_hann_window(size: usize) -> Vec<f32> {
 /// 
 /// Used to estimate instantaneous frequency from phase differences
 /// between consecutive frames.
+#[allow(dead_code)]
 fn unwrap_phase(phase: f32, prev_phase: f32, bin_idx: usize, fft_size: usize, hop_size: usize) -> f32 {
     let mut delta = phase - prev_phase;
     

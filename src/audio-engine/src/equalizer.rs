@@ -49,10 +49,6 @@ impl SimpleFilter {
     fn set_gain(&mut self, db: f32) {
         self.gain = db_to_linear(db);
     }
-
-    fn get_gain(&self) -> f32 {
-        self.gain
-    }
 }
 
 /// Three-band parametric equalizer

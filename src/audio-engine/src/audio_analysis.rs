@@ -4,7 +4,6 @@ use rustfft::{FftPlanner, num_complex::Complex};
 /// Frequency bands for multi-band spectral analysis
 #[derive(Debug, Clone)]
 struct FrequencyBand {
-    name: &'static str,
     low_freq: f32,
     high_freq: f32,
     weight: f32,
@@ -12,50 +11,44 @@ struct FrequencyBand {
 
 /// Audio analysis module for BPM and key detection
 pub struct AudioAnalyzer {
-    sample_rate: u32,
-    fft_size: usize,
+    _sample_rate: u32,
+    _fft_size: usize,
 }
 
 impl AudioAnalyzer {
     pub fn new(sample_rate: u32, fft_size: usize) -> Self {
-        Self { sample_rate, fft_size }
+        Self { _sample_rate: sample_rate, _fft_size: fft_size }
     }
 
     /// Define frequency bands for multi-band analysis
     fn frequency_bands() -> Vec<FrequencyBand> {
         vec![
             FrequencyBand {
-                name: "Sub-bass",
                 low_freq: 20.0,
                 high_freq: 60.0,
                 weight: 0.8,
             },
             FrequencyBand {
-                name: "Bass",
                 low_freq: 60.0,
                 high_freq: 250.0,
                 weight: 1.5,
             },
             FrequencyBand {
-                name: "Low-mids",
                 low_freq: 250.0,
                 high_freq: 500.0,
                 weight: 1.2,
             },
             FrequencyBand {
-                name: "Mids",
                 low_freq: 500.0,
                 high_freq: 2000.0,
                 weight: 1.0,
             },
             FrequencyBand {
-                name: "High-mids",
                 low_freq: 2000.0,
                 high_freq: 4000.0,
                 weight: 0.7,
             },
             FrequencyBand {
-                name: "Highs",
                 low_freq: 4000.0,
                 high_freq: 8000.0,
                 weight: 0.5,

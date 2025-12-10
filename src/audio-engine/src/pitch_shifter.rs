@@ -18,17 +18,8 @@
 /// Implements pitch shifting through frequency-domain processing.
 /// Shifts pitch while maintaining playback speed.
 pub struct PitchShifter {
-    sample_rate: u32,
-    fft_size: usize,
-    
     // Pitch control
     pitch_ratio: f32,
-    
-    // Buffers for processing
-    buffer: Vec<f32>,
-    
-    // Phase tracking
-    read_pos: f32,
 }
 
 impl PitchShifter {
@@ -37,13 +28,9 @@ impl PitchShifter {
     /// # Arguments
     /// * `sample_rate` - Sample rate in Hz
     /// * `fft_size` - FFT size for analysis
-    pub fn new(sample_rate: u32, fft_size: usize) -> Self {
+    pub fn new(_sample_rate: u32, _fft_size: usize) -> Self {
         PitchShifter {
-            sample_rate,
-            fft_size,
             pitch_ratio: 1.0,
-            buffer: vec![0.0; fft_size * 2],
-            read_pos: 0.0,
         }
     }
 
