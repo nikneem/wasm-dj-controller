@@ -31,6 +31,8 @@
 - 💾 **Cue Points** - Set and recall cue points for precise mixing
 - 🌊 **Drag & Drop** - Easy track loading with visual feedback
 
+Demo at https://zealous-cliff-0bce69b03.3.azurestaticapps.net/
+
 ## 🚀 Tech Stack
 
 ### Frontend
