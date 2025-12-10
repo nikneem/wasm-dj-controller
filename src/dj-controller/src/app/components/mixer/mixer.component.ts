@@ -1,8 +1,9 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SliderModule } from 'primeng/slider';
 import { KnobComponent } from '../knob/knob.component';
+import { SharedAudioContextService } from '../../services/shared-audio-context.service';
 
 export interface ChannelSettings {
     gain: number;
@@ -21,6 +22,8 @@ export interface ChannelSettings {
     styleUrls: ['./mixer.component.scss']
 })
 export class MixerComponent {
+    private sharedAudioContext = inject(SharedAudioContextService);
+
     @Input() leftDeckSettings: ChannelSettings = {
         gain: 0,
         highEq: 0,
@@ -40,10 +43,16 @@ export class MixerComponent {
     };
 
     @Input() crossFader: number = 0; // -100 (left) to +100 (right)
+    masterVolume: number = 80; // Master volume (0-100)
 
     @Output() leftDeckChange = new EventEmitter<ChannelSettings>();
     @Output() rightDeckChange = new EventEmitter<ChannelSettings>();
     @Output() crossFaderChange = new EventEmitter<number>();
+
+    onMasterVolumeChange(value: number): void {
+        this.masterVolume = value;
+        this.sharedAudioContext.setMasterVolume(value / 100);
+    }
 
     onLeftGainChange(value: number): void {
         this.leftDeckSettings.gain = value;
