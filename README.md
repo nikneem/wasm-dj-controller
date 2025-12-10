@@ -12,7 +12,7 @@
 
 [Features](#-features) • [Tech Stack](#-tech-stack) • [Getting Started](#-getting-started) • [Architecture](#-architecture) • [Deployment](#-deployment)
 
-![DJ Controller Preview](https://img.shields.io/badge/Status-Active-success)
+![DJ Controller Screenshot](docs/screenshot.png)
 
 </div>
 
